@@ -1,20 +1,25 @@
 % Spark
 % T. Verbeiren
-% -22/1/2014
+% 9/7/2014
 
 
 # Contents
 
-Introduction to M/R
+Introduction
 
 Spark
 
-*Practice*
+Examples
 
-Discussion
+Ecosystem
 
 Conclusions
 
+- - -
+
+# Me, Myself and I
+
+- - -
 
 # Introduction
 
@@ -59,7 +64,7 @@ val y = x map () reduce ()
 \ 
 
 ```scala
-val y = x map () filter() map () reduce () flatMap () reduce ()
+val y = x map () filter() map () flatMap () reduce ()
 ```
 
 - - -
@@ -68,19 +73,19 @@ val y = x map () filter() map () reduce () flatMap () reduce ()
 
 \ 
 
-### Language support
+1. Language support
 
 <!-- Functions as first-class citizens -->
 
 \ 
 
-### Platform
+2. Platform
 
 <!-- Fast and efficient resource management -->
 
 \ 
 
-### Parallel abstraction mechanism
+3. Parallel abstraction mechanism
 
 <!-- Some kind of abstraction that allows us to deal with what instead of how -->
 
@@ -122,7 +127,7 @@ Built for low-latency
 
 \ 
 
-Collection
+*Immutable* Collection
 
 \ 
 
@@ -130,7 +135,7 @@ Accepting **transformations** and **actions**
 
 - - -
 
-### Tranformations
+### Transformations
 
 \ 
 
@@ -161,62 +166,87 @@ Accepting **transformations** and **actions**
 ```scala
 import sc._
 
-val par = parallelize(1 to 100000)
-// par: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[1] at parallelize at <console>:12
+val N = 10000000
 
-par.count
-//res: Long = 100000
-
-par.toDebugString
-// res: String = ParallelCollectionRDD[1] at parallelize at <console>:12 (96 partitions)
-
-val mapped = par map (x => (x,x*x))
-// mapped: org.apache.spark.rdd.RDD[(Int, Int)] = MappedRDD[3] at map at <console>:14
-
-mapped take 5
-// res: Array[(Int, Int)] = Array((1,1), (2,4), (3,9), (4,16), (5,25))
-
-mapped map (_._2) reduce ((x,y) => x+y)
-// res: Int = 1626540144
+val par = parallelize(1 to N)
+// par: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[1] 
+//   at parallelize at <console>:12
 ```
 
 - - -
 
-### Lineage
+```scala
+// Generate a point in 2D unit square
+def randomPoint:(Double,Double) = {
+    val x = Math.random()
+    val y = Math.random()
+    (x,y)
+}
+// Check if a point lies in the unit circle
+def inCircle(point:(Double,Double)):Int = {
+    if (point._1*point._1 + point._2*point._2 < 1) 1 else 0
+}
+```
 
-<div id="simpleLineage" align="center">
-<svg width="600" height="500">
-<g transform="translate(20,20)"/>
-</svg>
-</div>
+- - -
 
-<script>
-Reveal.addEventListener( 'ready', function( event ) {
-    // event.currentSlide, event.indexh, event.indexv
-    // Create a new directed graph
-    var g = new dagreD3.Digraph();
+```
+// List of hits yes/no
+val inCircleList = par map(i => inCircle(randomPoint))
 
-    g.addNode("a1", { label: "file" });
-    g.addNode("a2", { label: "words" });
-    g.addNode("a3", { label: "mapped" });
-    g.addNode("a4", { label: "grouped" });
-    g.addNode("a5", { label: "result" });
+// Return the first 5 elements from the RDD
+inCircleList take 5
 
-    g.addEdge(null, "a1", "a2", { label: "flatMap" });
-    g.addEdge(null, "a2", "a3", { label: "map / sort" });
-    g.addEdge(null, "a3", "a4", { label: "groupByKey" });
-    g.addEdge(null, "a4", "a5", { label: "reducyByKey" });
-    
-    var renderer = new dagreD3.Renderer();
-    renderer.edgeInterpolate('linear');
-    var svgElement = d3.selectAll("#simpleLineage svg g");
-    var layout = dagreD3.layout()
-//                        .nodeSep(20)
-//                        .rankDir("LR");
-    renderer.layout(layout).run(g, svgElement);
-} );
-</script>
+// Get info about the RDD
+inCircleList.toDebugString
 
+// The number of hits
+val total = inCircleList reduce (_+_)
+
+// Probability of hitting the circle *4 = Pi
+val P = 4. * total / N
+```
+
+- - -
+
+From the [Spark examples](https://spark.apache.org/examples.html) page
+
+\
+
+```scala
+val count = parallelize(1 to N).map{i =>
+  val x = Math.random()
+  val y = Math.random()
+  if (x*x + y*y < 1) 1 else 0
+}.reduce(_ + _)
+println("Pi is roughly " + 4.0 * count / N)
+```
+
+- - -
+
+Hadoop M/R in Spark
+
+\ 
+
+```scala
+// Read a file, e.g. Ulysses from Project Gutenberg
+// and process it similar to Hadoop M/R
+val file = textFile("Joyce-Ulysses.txt")
+
+// Retrieve an Array of words in the text
+val words = file.flatMap(_.split(" "))
+
+// Map to (key,value) pairs
+val mapped = words map (word => (word,1)) 
+
+// Sort and group by key, 
+// Result is of form (key, List(value1, value2, value3, ...))
+val grouped = mapped sortByKey() groupByKey()
+
+// The length of the values array yields the amount
+val result = grouped map {case (k,vs) => (k,vs.length)}
+// But where is the *reduce*?
+```
 
 - - -
 
@@ -232,27 +262,28 @@ val file = textFile("Joyce-Ulysses.txt")
 // Retrieve an Array of words in the text
 val words = file.flatMap(_.split(" "))
 
-// Map to (key,value) pairs and sort by word (key)
-val mapped = words map (x => (x,1)) sortByKey()
+// Map to (key,value) pairs
+val mapped = words map (word => (word,1)) 
 
-// Group by key, result is of form (key, List(value1, value2, value3, ...))
-val grouped = mapped groupByKey()
+// Sort and group by key, 
+// Result is of form (key, List(value1, value2, value3, ...))
+val grouped = mapped sortByKey() groupByKey()
 
 // The length of the values array yields the amount
-val result = grouped map {case (k,vs) => (k,vs.length)}
-```
-
-```scala
-// But we did not have a reduce here?
+// val result = grouped map {case (k,vs) => (k,vs.length)}
 val result = grouped map {case (k,vs) => (k, vs reduce (_+_))}
 ```
 
 - - - 
 
+In Spark, we would use:
+
+\ 
+
 ```scala
 val file = sc.textFile("Joyce-Ulysses.txt")
 val words = file.flatMap(_.split(" "))
-val mapped = words map (x => (x,1))
+val mapped = words map (word => (word,1))
 val result = mapped reduceByKey(_+_)
 ```
 
@@ -274,18 +305,13 @@ val result = mapped reduceByKey(_+_)
 
 - - -
 
+**TODO**
+
 ```scala
-val par = sc.parallelize(1 to 100000)
-// par: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[1] at parallelize at <console>:12
-
-val parCached = par.persist
-// parCached: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[1] at parallelize at <console>:12
-
-parCached.count
-// res: Long = 100000
-
-parCached map(x => (x,x*x)) map (_._2) reduce ((x,y) => x+y)
-// res: Int = 1626540144
+val file = sc.textFile("Joyce-Ulysses.txt")
+val words = file.flatMap(_.split(" "))
+val mapped = words map (word => (word,1))
+val result = mapped reduceByKey(_+_)
 ```
 
 - - -
@@ -319,11 +345,9 @@ class tfsData(val chr: String, val pos1: Int, val pos2:Int, val tf: String) {
     }
 }
 
-
 // Turn them into an RDD of objects
 val cov = covFile.map(_.split("\\s+")).map(new covData(_))
 val tfs = bedFile.map(_.split("\\s+")).map(new tfsData(_))
-
 
 // Count the number of items in both datasets
 cov.count
@@ -344,7 +368,6 @@ ctfs.count
 ctfs.count
 
 //ctfs take 5
-
 val kvcov = ccov.map(x => (x.pos,(x.cov))).cache
 val kvtfs = ctfs.filter(x => x.chr == "chr19").map(x => (x.pos1,(x.pos2,x.tf)))
 
@@ -356,7 +379,6 @@ val cjoined = kvcov.join(kvtfs)
 
 // Waaaw, that's fast! In fact, nothing happened yet.
 // select 5 entries:
-
 val flatjoined = cjoined map { case(x,(y,(z,zz))) => (x,z,zz,y) }
 
 flatjoined take 5
@@ -372,7 +394,28 @@ TODO
 
 - - -
 
+# Ecosystem
+
+- Spark SQL
+- Spark Streaming
+- Shark
+- MLlib
+- GraphX
+
+- - -
+
 # The end
+
+\ 
+
+Some links:
+
+- [Slide sources](https://github.com/tverbeiren/BigDataBe-Spark)
+- [Spark](https://spark.apache.org/)
+- [Data Visualization Lab](http://datavislab.org)
+- [ExaScience Life Lab](http://www.exascience.com/)
+- [Data Intuitive](http://data-intuitive.com)
+
 
 - - -
 
@@ -424,6 +467,7 @@ hadoop fs -mkdir /user/toniv
 hadoop fs -copyFromLocal data/NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage /user/toniv/
 hadoop fs -copyFromLocal data/201101_encode_motifs_in_tf_peaks.bed /user/toniv/
 hadoop fs -copyFromLocal data/Joyce-Ulysses.txt /user/toniv/
+hadoop fs -copyFromLocal data/lpsa.data /user/toniv/
 hdfs dfs -setrep -w 3 /user/toniv
 # Start the Spark Shell
 SPARK_MEM=32g MASTER=spark://ly-1-10:7077 bin/spark-shell
@@ -449,6 +493,47 @@ val mapped = words map (x => (x,1))
 val grouped = mapped.groupBy(_._1)
 val res = grouped map (x => x._2.length)
 ```
+
+
+
+
+- - -
+
+### Lineage
+
+<div id="simpleLineage" align="center">
+<svg width="600" height="500">
+<g transform="translate(20,20)"/>
+</svg>
+</div>
+
+<script>
+Reveal.addEventListener( 'ready', function( event ) {
+    // event.currentSlide, event.indexh, event.indexv
+    // Create a new directed graph
+    var g = new dagreD3.Digraph();
+
+    g.addNode("a1", { label: "file" });
+    g.addNode("a2", { label: "words" });
+    g.addNode("a3", { label: "mapped" });
+    g.addNode("a4", { label: "grouped" });
+    g.addNode("a5", { label: "result" });
+
+    g.addEdge(null, "a1", "a2", { label: "flatMap" });
+    g.addEdge(null, "a2", "a3", { label: "map / sort" });
+    g.addEdge(null, "a3", "a4", { label: "groupByKey" });
+    g.addEdge(null, "a4", "a5", { label: "reducyByKey" });
+    
+    var renderer = new dagreD3.Renderer();
+    renderer.edgeInterpolate('linear');
+    var svgElement = d3.selectAll("#simpleLineage svg g");
+    var layout = dagreD3.layout()
+//                        .nodeSep(20)
+//                        .rankDir("LR");
+    renderer.layout(layout).run(g, svgElement);
+} );
+</script>
+
 
 
 

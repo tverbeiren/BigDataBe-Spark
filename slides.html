@@ -39,16 +39,19 @@
 <section>
     <h1 class="title">Spark</h1>
     <h2 class="author">T. Verbeiren</h2>
-    <h3 class="date">-22/1/2014</h3>
+    <h3 class="date">9/7/2014</h3>
 </section>
 
 <section id="contents" class="slide level1">
 <h1>Contents</h1>
 <p>Introduction</p>
-<p>Hadoop</p>
 <p>Spark</p>
-<p><em>Practice</em></p>
+<p>Examples</p>
+<p>Ecosystem</p>
 <p>Conclusions</p>
+</section>
+<section id="me-myself-and-i" class="slide level1">
+<h1>Me, Myself and I</h1>
 </section>
 <section id="introduction" class="slide level1">
 <h1>Introduction</h1>
@@ -81,21 +84,27 @@
 
 <h3 id="this-could-be-extended">... this could be extended</h3>
 <p> </p>
-<pre class="scala"><code>val y = x map () filter() map () reduce () flatMap () reduce ()</code></pre>
+<pre class="scala"><code>val y = x map () filter() map () flatMap () reduce ()</code></pre>
 </section>
 <section class="slide level1">
 
 <h2 id="what-would-be-needed">What would be needed?</h2>
 <p> </p>
-<h3 id="language-support">Language support</h3>
+<ol type="1">
+<li>Language support</li>
+</ol>
 <!-- Functions as first-class citizens -->
 
 <p> </p>
-<h3 id="platform">Platform</h3>
+<ol start="2" type="1">
+<li>Platform</li>
+</ol>
 <!-- Fast and efficient resource management -->
 
 <p> </p>
-<h3 id="parallel-abstraction-mechanism">Parallel abstraction mechanism</h3>
+<ol start="3" type="1">
+<li>Parallel abstraction mechanism</li>
+</ol>
 <!-- Some kind of abstraction that allows us to deal with what instead of how -->
 
 </section>
@@ -111,7 +120,7 @@
 </section>
 <section class="slide level1">
 
-<h2 id="platform-1">Platform</h2>
+<h2 id="platform">Platform</h2>
 <p> </p>
 <p>Built for low-latency</p>
 </section>
@@ -125,13 +134,13 @@
 
 <h3 id="rdds">RDDs</h3>
 <p> </p>
-<p>Collection</p>
+<p><em>Immutable</em> Collection</p>
 <p> </p>
 <p>Accepting <strong>transformations</strong> and <strong>actions</strong></p>
 </section>
 <section class="slide level1">
 
-<h3 id="tranformations">Tranformations</h3>
+<h3 id="transformations">Transformations</h3>
 <p> </p>
 <ul>
 <li><code>map</code></li>
@@ -161,23 +170,296 @@
 
 <pre class="scala"><code>import sc._
 
-val par = parallelize(1 to 100000)
-// par: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[1] at parallelize at &lt;console&gt;:12
+val N = 10000000
 
-par.count
-//res: Long = 100000
+val par = parallelize(1 to N)
+// par: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[1] 
+//   at parallelize at &lt;console&gt;:12</code></pre>
+</section>
+<section class="slide level1">
 
-par.toDebugString
-// res: String = ParallelCollectionRDD[1] at parallelize at &lt;console&gt;:12 (96 partitions)
+<pre class="scala"><code>// Generate a point in 2D unit square
+def randomPoint:(Double,Double) = {
+    val x = Math.random()
+    val y = Math.random()
+    (x,y)
+}
+// Check if a point lies in the unit circle
+def inCircle(point:(Double,Double)):Int = {
+    if (point._1*point._1 + point._2*point._2 &lt; 1) 1 else 0
+}</code></pre>
+</section>
+<section class="slide level1">
 
-val mapped = par map (x =&gt; (x,x*x))
-// mapped: org.apache.spark.rdd.RDD[(Int, Int)] = MappedRDD[3] at map at &lt;console&gt;:14
+<pre><code>// List of hits yes/no
+val inCircleList = par map(i =&gt; inCircle(randomPoint))
 
-mapped take 5
-// res: Array[(Int, Int)] = Array((1,1), (2,4), (3,9), (4,16), (5,25))
+// Return the first 5 elements from the RDD
+inCircleList take 5
 
-mapped map (_._2) reduce ((x,y) =&gt; x+y)
-// res: Int = 1626540144</code></pre>
+// Get info about the RDD
+inCircleList.toDebugString
+
+// The number of hits
+val total = inCircleList reduce (_+_)
+
+// Probability of hitting the circle *4 = Pi
+val P = 4. * total / N</code></pre>
+</section>
+<section class="slide level1">
+
+<p>From the <a href="https://spark.apache.org/examples.html">Spark examples</a> page</p>
+<p><br /></p>
+<pre class="scala"><code>val count = parallelize(1 to N).map{i =&gt;
+  val x = Math.random()
+  val y = Math.random()
+  if (x*x + y*y &lt; 1) 1 else 0
+}.reduce(_ + _)
+println(&quot;Pi is roughly &quot; + 4.0 * count / N)</code></pre>
+</section>
+<section class="slide level1">
+
+<p>Hadoop M/R in Spark</p>
+<p> </p>
+<pre class="scala"><code>// Read a file, e.g. Ulysses from Project Gutenberg
+// and process it similar to Hadoop M/R
+val file = textFile(&quot;Joyce-Ulysses.txt&quot;)
+
+// Retrieve an Array of words in the text
+val words = file.flatMap(_.split(&quot; &quot;))
+
+// Map to (key,value) pairs
+val mapped = words map (word =&gt; (word,1)) 
+
+// Sort and group by key, 
+// Result is of form (key, List(value1, value2, value3, ...))
+val grouped = mapped sortByKey() groupByKey()
+
+// The length of the values array yields the amount
+val result = grouped map {case (k,vs) =&gt; (k,vs.length)}
+// But where is the *reduce*?</code></pre>
+</section>
+<section class="slide level1">
+
+<p>Be careful with <em>definitions</em> of <code>map</code> and <code>reduce</code>!</p>
+<p> </p>
+<pre class="scala"><code>// Read a file, e.g. Ulysses from Project Gutenberg
+// and process it similar to Hadoop M/R
+val file = textFile(&quot;Joyce-Ulysses.txt&quot;)
+
+// Retrieve an Array of words in the text
+val words = file.flatMap(_.split(&quot; &quot;))
+
+// Map to (key,value) pairs
+val mapped = words map (word =&gt; (word,1)) 
+
+// Sort and group by key, 
+// Result is of form (key, List(value1, value2, value3, ...))
+val grouped = mapped sortByKey() groupByKey()
+
+// The length of the values array yields the amount
+// val result = grouped map {case (k,vs) =&gt; (k,vs.length)}
+val result = grouped map {case (k,vs) =&gt; (k, vs reduce (_+_))}</code></pre>
+</section>
+<section class="slide level1">
+
+<p>In Spark, we would use:</p>
+<p> </p>
+<pre class="scala"><code>val file = sc.textFile(&quot;Joyce-Ulysses.txt&quot;)
+val words = file.flatMap(_.split(&quot; &quot;))
+val mapped = words map (word =&gt; (word,1))
+val result = mapped reduceByKey(_+_)</code></pre>
+</section>
+<section class="slide level1">
+
+<h2 id="and-repl">... and REPL</h2>
+</section>
+<section class="slide level1">
+
+<h2 id="and-web-interface">... and Web interface</h2>
+</section>
+<section class="slide level1">
+
+<figure>
+<img src="pics/SparkInterface.png" />
+</figure>
+</section>
+<section class="slide level1">
+
+<h2 id="and-distributed-memory-caching">... and distributed memory caching</h2>
+</section>
+<section class="slide level1">
+
+<p><strong>TODO</strong></p>
+<pre class="scala"><code>val file = sc.textFile(&quot;Joyce-Ulysses.txt&quot;)
+val words = file.flatMap(_.split(&quot; &quot;))
+val mapped = words map (word =&gt; (word,1))
+val result = mapped reduceByKey(_+_)</code></pre>
+</section>
+<section id="some-more-examples" class="slide level1">
+<h1>Some more examples</h1>
+</section>
+<section class="slide level1">
+
+<h2 id="coverage-and-transcription-factors">Coverage and transcription factors</h2>
+<p> </p>
+<p>TODO</p>
+</section>
+<section class="slide level1">
+
+<pre class="scala"><code>// Load files from HDFS
+val covFile = sc.textFile(&quot;NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage&quot;,8)
+val bedFile = sc.textFile(&quot;201101_encode_motifs_in_tf_peaks.bed&quot;,8)
+
+class covData(val chr: String, val pos: Int, val cov: Int) {
+    def this(line: Array[String]) {
+     this(line(0).toString, line(1).toInt, line(2).toInt)
+    }
+}
+
+class tfsData(val chr: String, val pos1: Int, val pos2:Int, val tf: String) {
+    def this(line: Array[String]) {
+     this(line(0).toString, line(1).toInt, line(2).toInt, line(3).toString)
+    }
+}
+
+// Turn them into an RDD of objects
+val cov = covFile.map(_.split(&quot;\\s+&quot;)).map(new covData(_))
+val tfs = bedFile.map(_.split(&quot;\\s+&quot;)).map(new tfsData(_))
+
+// Count the number of items in both datasets
+cov.count
+tfs.count
+
+// Cache
+val ccov = cov cache
+val ctfs = tfs cache
+
+// Count again
+ccov.count
+
+// This again takes a lot of time!?! Not this time!
+ccov.count
+
+// The same for ctfs
+ctfs.count
+ctfs.count
+
+//ctfs take 5
+val kvcov = ccov.map(x =&gt; (x.pos,(x.cov))).cache
+val kvtfs = ctfs.filter(x =&gt; x.chr == &quot;chr19&quot;).map(x =&gt; (x.pos1,(x.pos2,x.tf)))
+
+// Cache the coverage data, collect the rest
+kvcov.count
+val tfs = kvtfs map {case(x,(y,z))=&gt; (x,y,z)} collect 
+
+val cjoined = kvcov.join(kvtfs)
+
+// Waaaw, that&#39;s fast! In fact, nothing happened yet.
+// select 5 entries:
+val flatjoined = cjoined map { case(x,(y,(z,zz))) =&gt; (x,z,zz,y) }
+
+flatjoined take 5</code></pre>
+</section>
+<section class="slide level1">
+
+<h2 id="visualization-of-genomic-data">Visualization of genomic data</h2>
+<p> </p>
+<p>TODO</p>
+</section>
+<section id="ecosystem" class="slide level1">
+<h1>Ecosystem</h1>
+<ul>
+<li>Spark SQL</li>
+<li>Spark Streaming</li>
+<li>Shark</li>
+<li>MLlib</li>
+<li>GraphX</li>
+</ul>
+</section>
+<section id="the-end" class="slide level1">
+<h1>The end</h1>
+<p> </p>
+<p>Some links:</p>
+<ul>
+<li><a href="https://github.com/tverbeiren/BigDataBe-Spark">Slide sources</a></li>
+<li><a href="https://spark.apache.org/">Spark</a></li>
+<li><a href="http://datavislab.org">Data Visualization Lab</a></li>
+<li><a href="http://www.exascience.com/">ExaScience Life Lab</a></li>
+<li><a href="http://data-intuitive.com">Data Intuitive</a></li>
+</ul>
+</section>
+<section class="slide level1">
+
+</section>
+<section id="reference-material-and-style-info..." class="slide level1">
+<h1>Reference material and style info...</h1>
+</section>
+<section class="slide level1">
+
+<style>
+#barchart svg {
+    overflow: hidden;
+}
+
+.node rect {
+    stroke: #333;
+    stroke-width: 1.5px;
+    fill: #fff;
+}
+
+text {
+  font-weight: 300;
+  font-size: 20px;
+}
+
+.edgeLabel rect {
+    fill: none;
+    min-width: 60px;
+}
+
+.edgePath {
+    stroke: #333;
+    stroke-width: 1.5px;
+    fill: none;
+}
+</style>
+
+
+</section>
+<section class="slide level1">
+
+<pre class="bash"><code>tmux
+isub -n 2
+module load hadoop-2.3.0
+module load spark-0.9.0-hadoop-2.3.0
+
+hadoop fs -mkdir /user
+hadoop fs -mkdir /user/toniv 
+hadoop fs -copyFromLocal data/NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage /user/toniv/
+hadoop fs -copyFromLocal data/201101_encode_motifs_in_tf_peaks.bed /user/toniv/
+hadoop fs -copyFromLocal data/Joyce-Ulysses.txt /user/toniv/
+hadoop fs -copyFromLocal data/lpsa.data /user/toniv/
+hdfs dfs -setrep -w 3 /user/toniv
+# Start the Spark Shell
+SPARK_MEM=32g MASTER=spark://ly-1-10:7077 bin/spark-shell</code></pre>
+</section>
+<section class="slide level1">
+
+<pre class="bash"><code>cd server
+cat local.conf | sed &#39;/^\ *master/ c\  master = &quot;&#39;&quot;$MASTER&quot;\&quot;&gt; local.tmp
+cp local.conf local.backup
+cp local.tmp local.conf
+./server_start.sh
+cd ~</code></pre>
+</section>
+<section class="slide level1">
+
+<pre class="scala"><code>val file = textFile(&quot;/var/log/system.log&quot;)
+val words = file.flatMap(_.split(&quot; &quot;))
+val mapped = words map (x =&gt; (x,1))
+val grouped = mapped.groupBy(_._1)
+val res = grouped map (x =&gt; x._2.length)</code></pre>
 </section>
 <section class="slide level1">
 
@@ -216,209 +498,12 @@ Reveal.addEventListener( 'ready', function( event ) {
 </script>
 
 
-</section>
-<section class="slide level1">
-
-<p>Be careful with <em>definitions</em> of <code>map</code> and <code>reduce</code>!</p>
-<p> </p>
-<pre class="scala"><code>// Read a file, e.g. Ulysses from Project Gutenberg
-// and process it similar to Hadoop M/R
-val file = sc.textFile(&quot;Joyce-Ulysses.txt&quot;)
-
-// Retrieve an Array of words in the text
-val words = file.flatMap(_.split(&quot; &quot;))
-
-// Map to (key,value) pairs and sort by word (key)
-val mapped = words map (x =&gt; (x,1)) sortByKey()
-
-// Group by key, result is of form (key, Array(value1, value2, value3, ...))
-val grouped = mapped groupByKey()
-
-// The length of the values array yields the amount
-val result = grouped map {case (k,vs) =&gt; (k,vs.length)}</code></pre>
-<pre class="scala"><code>// But we did not have a reduce here?
-val result = grouped map {case (k,vs) =&gt; (k, vs reduce (_+_))}</code></pre>
-</section>
-<section class="slide level1">
-
-<pre class="scala"><code>val file = sc.textFile(&quot;Joyce-Ulysses.txt&quot;)
-val words = file.flatMap(_.split(&quot; &quot;))
-val mapped = words map (x =&gt; (x,1))
-val result = mapped reduceByKey(_+_)</code></pre>
-</section>
-<section class="slide level1">
-
-<h2 id="and-repl">... and REPL</h2>
-</section>
-<section class="slide level1">
-
-<pre class="scala"><code>val file = sc.textFile(&quot;Joyce-Ulysses.txt&quot;)
-val words = file.flatMap(_.split(&quot; &quot;))
-val mapped = words map (x =&gt; (x,1))
-val result = mapped reduceByKey(_+_)</code></pre>
-</section>
-<section class="slide level1">
-
-<figure>
-<img src="SparkInterface.png" />
-</figure>
-</section>
-<section class="slide level1">
-
-<h2 id="and-distributed-memory-caching">... and distributed memory caching</h2>
-</section>
-<section class="slide level1">
-
-<pre class="scala"><code>val par = sc.parallelize(1 to 100000)
-// par: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[1] at parallelize at &lt;console&gt;:12
-
-val parCached = par.persist
-// parCached: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[1] at parallelize at &lt;console&gt;:12
-
-parCached.count
-// res: Long = 100000
-
-parCached map(x =&gt; (x,x*x)) map (_._2) reduce ((x,y) =&gt; x+y)
-// res: Int = 1626540144</code></pre>
-</section>
-<section id="some-more-examples" class="slide level1">
-<h1>Some more examples</h1>
-</section>
-<section class="slide level1">
-
-</section>
-<section class="slide level1">
-
-</section>
-<section class="slide level1">
-
-</section>
-<section class="slide level1">
-
-<h2 id="a-title...">A title...</h2>
-</section>
-<section class="slide level1">
-
-<style>
-#barchart svg {
-    overflow: hidden;
-}
-
-.node rect {
-    stroke: #333;
-    stroke-width: 1.5px;
-    fill: #fff;
-}
-
-text {
-  font-weight: 300;
-  font-size: 20px;
-}
-
-.edgeLabel rect {
-    fill: none;
-    min-width: 60px;
-}
-
-.edgePath {
-    stroke: #333;
-    stroke-width: 1.5px;
-    fill: none;
-}
-</style>
 
 
-</section>
-<section id="another-title" class="slide level1">
-<h1>Another title</h1>
-</section>
-<section class="slide level1">
-
-<pre class="bash"><code>tmux
-isub -n 2
-module load hadoop-2.3.0
-module load spark-0.9.0-hadoop-2.3.0
-
-hadoop fs -mkdir /user
-hadoop fs -mkdir /user/toniv 
-hadoop fs -copyFromLocal data/NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage /user/toniv/
-hadoop fs -copyFromLocal data/201101_encode_motifs_in_tf_peaks.bed /user/toniv/
-hadoop fs -copyFromLocal data/Joyce-Ulysses.txt /user/toniv/
-hdfs dfs -setrep -w 3 /user/toniv
-# Start the Spark Shell
-SPARK_MEM=32g MASTER=spark://ly-1-10:7077 bin/spark-shell</code></pre>
-<pre class="scala"><code>// Load files from HDFS
-val covFile = sc.textFile(&quot;NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage&quot;,8)
-val bedFile = sc.textFile(&quot;201101_encode_motifs_in_tf_peaks.bed&quot;,8)
-
-class covData(val chr: String, val pos: Int, val cov: Int) {
-    def this(line: Array[String]) {
-     this(line(0).toString, line(1).toInt, line(2).toInt)
-    }
-}
-
-class tfsData(val chr: String, val pos1: Int, val pos2:Int, val tf: String) {
-    def this(line: Array[String]) {
-     this(line(0).toString, line(1).toInt, line(2).toInt, line(3).toString)
-    }
-}
 
 
-// Turn them into an RDD of objects
-val cov = covFile.map(_.split(&quot;\\s+&quot;)).map(new covData(_))
-val tfs = bedFile.map(_.split(&quot;\\s+&quot;)).map(new tfsData(_))
 
 
-// Count the number of items in both datasets
-cov.count
-tfs.count
-
-// Cache
-val ccov = cov cache
-val ctfs = tfs cache
-
-// Count again
-ccov.count
-
-// This again takes a lot of time!?! Not this time!
-ccov.count
-
-// The same for ctfs
-ctfs.count
-ctfs.count
-
-//ctfs take 5
-
-val kvcov = ccov.map(x =&gt; (x.pos,(x.cov))).cache
-val kvtfs = ctfs.filter(x =&gt; x.chr == &quot;chr19&quot;).map(x =&gt; (x.pos1,(x.pos2,x.tf)))
-
-// Cache the coverage data, collect the rest
-kvcov.count
-val tfs = kvtfs map {case(x,(y,z))=&gt; (x,y,z)} collect 
-
-val cjoined = kvcov.join(kvtfs)
-
-// Waaaw, that&#39;s fast! In fact, nothing happened yet.
-// select 5 entries:
-
-val flatjoined = cjoined map { case(x,(y,(z,zz))) =&gt; (x,z,zz,y) }
-
-flatjoined take 5</code></pre>
-</section>
-<section id="some-additional-info..." class="slide level1">
-<h1>Some additional info...</h1>
-<pre><code>cd server
-cat local.conf | sed &#39;/^\ *master/ c\  master = &quot;&#39;&quot;$MASTER&quot;\&quot;&gt; local.tmp
-cp local.conf local.backup
-cp local.tmp local.conf
-./server_start.sh
-cd ~</code></pre>
-<pre><code>val file = textFile(&quot;/var/log/system.log&quot;)
-val words = file.flatMap(_.split(&quot; &quot;))
-val mapped = words map (x =&gt; (x,1))
-val grouped = mapped.groupBy(_._1)
-val res = grouped map (x =&gt; x._2.length)</code></pre>
-<pre><code>if (a._1 == b._1) (a._1, a._2 + b._2) else (b._1,b._2)</code></pre>
 </section>
     </div>
   </div>
