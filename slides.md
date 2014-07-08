@@ -5,13 +5,13 @@
 
 # Contents
 
-Introduction
-
-Hadoop
+Introduction to M/R
 
 Spark
 
 *Practice*
+
+Discussion
 
 Conclusions
 
@@ -48,7 +48,7 @@ Conclusions
 
 \ 
 
-```
+```scala
 val y = x map () reduce ()
 ```
 
@@ -58,7 +58,7 @@ val y = x map () reduce ()
 
 \ 
 
-```
+```scala
 val y = x map () filter() map () reduce () flatMap () reduce ()
 ```
 
@@ -114,7 +114,7 @@ Built for low-latency
 
 \ 
 
-RDDs
+**R**esilient **D**istributed **D**atasets
 
 - - -
 
@@ -159,7 +159,9 @@ Accepting **transformations** and **actions**
 - - -
 
 ```scala
-val par = sc.parallelize(1 to 100000)
+import sc._
+
+val par = parallelize(1 to 100000)
 // par: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[1] at parallelize at <console>:12
 
 par.count
@@ -225,7 +227,7 @@ Be careful with _definitions_ of `map` and `reduce`!
 ```scala
 // Read a file, e.g. Ulysses from Project Gutenberg
 // and process it similar to Hadoop M/R
-val file = sc.textFile("Joyce-Ulysses.txt")
+val file = textFile("Joyce-Ulysses.txt")
 
 // Retrieve an Array of words in the text
 val words = file.flatMap(_.split(" "))
@@ -233,7 +235,7 @@ val words = file.flatMap(_.split(" "))
 // Map to (key,value) pairs and sort by word (key)
 val mapped = words map (x => (x,1)) sortByKey()
 
-// Group by key, result is of form (key, Array(value1, value2, value3, ...))
+// Group by key, result is of form (key, List(value1, value2, value3, ...))
 val grouped = mapped groupByKey()
 
 // The length of the values array yields the amount
@@ -260,16 +262,11 @@ val result = mapped reduceByKey(_+_)
 
 - - -
 
-```scala
-val file = sc.textFile("Joyce-Ulysses.txt")
-val words = file.flatMap(_.split(" "))
-val mapped = words map (x => (x,1))
-val result = mapped reduceByKey(_+_)
-```
+## ... and Web interface
 
 - - -
 
-![](SparkInterface.png)
+![](pics/SparkInterface.png)
 
 - - -
 
@@ -297,72 +294,13 @@ parCached map(x => (x,x*x)) map (_._2) reduce ((x,y) => x+y)
 
 - - -
 
+## Coverage and transcription factors 
 
+\ 
 
-- - -
-
-- - -
-
-
-- - -
-
-## A title...
+TODO
 
 - - -
-
-
-
-<style>
-#barchart svg {
-    overflow: hidden;
-}
-
-.node rect {
-    stroke: #333;
-    stroke-width: 1.5px;
-    fill: #fff;
-}
-
-text {
-  font-weight: 300;
-  font-size: 20px;
-}
-
-.edgeLabel rect {
-    fill: none;
-    min-width: 60px;
-}
-
-.edgePath {
-    stroke: #333;
-    stroke-width: 1.5px;
-    fill: none;
-}
-</style>
-
-
-# Another title
-
-
-
-- - -
-
-```bash
-tmux
-isub -n 2
-module load hadoop-2.3.0
-module load spark-0.9.0-hadoop-2.3.0
-
-hadoop fs -mkdir /user
-hadoop fs -mkdir /user/toniv 
-hadoop fs -copyFromLocal data/NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage /user/toniv/
-hadoop fs -copyFromLocal data/201101_encode_motifs_in_tf_peaks.bed /user/toniv/
-hadoop fs -copyFromLocal data/Joyce-Ulysses.txt /user/toniv/
-hdfs dfs -setrep -w 3 /user/toniv
-# Start the Spark Shell
-SPARK_MEM=32g MASTER=spark://ly-1-10:7077 bin/spark-shell
-```
-
 
 ```scala
 // Load files from HDFS
@@ -424,17 +362,76 @@ val flatjoined = cjoined map { case(x,(y,(z,zz))) => (x,z,zz,y) }
 flatjoined take 5
 ```
 
+- - -
+
+## Visualization of genomic data
+
+\ 
+
+TODO
+
+- - -
+
+# The end
+
+- - -
+
+- - -
+
+# Reference material and style info...
+
+- - -
+
+<style>
+#barchart svg {
+    overflow: hidden;
+}
+
+.node rect {
+    stroke: #333;
+    stroke-width: 1.5px;
+    fill: #fff;
+}
+
+text {
+  font-weight: 300;
+  font-size: 20px;
+}
+
+.edgeLabel rect {
+    fill: none;
+    min-width: 60px;
+}
+
+.edgePath {
+    stroke: #333;
+    stroke-width: 1.5px;
+    fill: none;
+}
+</style>
 
 
 - - -
 
+```bash
+tmux
+isub -n 2
+module load hadoop-2.3.0
+module load spark-0.9.0-hadoop-2.3.0
 
-
-# Some additional info...
-
-
-
+hadoop fs -mkdir /user
+hadoop fs -mkdir /user/toniv 
+hadoop fs -copyFromLocal data/NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage /user/toniv/
+hadoop fs -copyFromLocal data/201101_encode_motifs_in_tf_peaks.bed /user/toniv/
+hadoop fs -copyFromLocal data/Joyce-Ulysses.txt /user/toniv/
+hdfs dfs -setrep -w 3 /user/toniv
+# Start the Spark Shell
+SPARK_MEM=32g MASTER=spark://ly-1-10:7077 bin/spark-shell
 ```
+
+- - -
+
+```bash
 cd server
 cat local.conf | sed '/^\ *master/ c\  master = "'"$MASTER"\"> local.tmp
 cp local.conf local.backup
@@ -443,9 +440,9 @@ cp local.tmp local.conf
 cd ~
 ```
 
+- - -
 
-
-```
+```scala
 val file = textFile("/var/log/system.log")
 val words = file.flatMap(_.split(" "))
 val mapped = words map (x => (x,1))
@@ -453,9 +450,6 @@ val grouped = mapped.groupBy(_._1)
 val res = grouped map (x => x._2.length)
 ```
 
-```
-if (a._1 == b._1) (a._1, a._2 + b._2) else (b._1,b._2)
-```
 
 
 

@@ -75,13 +75,13 @@
 
 <h3 id="we-could-just-write">... we could just write</h3>
 <p> </p>
-<pre><code>val y = x map () reduce ()</code></pre>
+<pre class="scala"><code>val y = x map () reduce ()</code></pre>
 </section>
 <section class="slide level1">
 
 <h3 id="this-could-be-extended">... this could be extended</h3>
 <p> </p>
-<pre><code>val y = x map () filter() map () reduce () flatMap () reduce ()</code></pre>
+<pre class="scala"><code>val y = x map () filter() map () reduce () flatMap () reduce ()</code></pre>
 </section>
 <section class="slide level1">
 
@@ -119,7 +119,7 @@
 
 <h2 id="abststraction-mechanism">Abststraction mechanism</h2>
 <p> </p>
-<p>RDDs</p>
+<p><strong>R</strong>esilient <strong>D</strong>istributed <strong>D</strong>atasets</p>
 </section>
 <section class="slide level1">
 
@@ -159,7 +159,9 @@
 </section>
 <section class="slide level1">
 
-<pre class="scala"><code>val par = sc.parallelize(1 to 100000)
+<pre class="scala"><code>import sc._
+
+val par = parallelize(1 to 100000)
 // par: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[1] at parallelize at &lt;console&gt;:12
 
 par.count
