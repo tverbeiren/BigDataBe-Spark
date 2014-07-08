@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="T. Verbeiren" />
+  <title>Spark</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="reveal.js/css/reveal.css"/>
+    <style type="text/css">code{white-space: pre;}</style>
+    <link rel="stylesheet" href="reveal.js/css/theme/simple.css" id="theme">
+
+<!-- Important for javascript graphs -->
+    <link rel="stylesheet" href="reveal.js/css/theme/blood.css" id="theme">
+
+
+    <!-- For syntax highlighting using highlight.js-->
+    <link rel="stylesheet" href="reveal.js/lib/css/zenburn.css">
+
+  <link rel="stylesheet" media="print" href="reveal.js/css/print/pdf.css" />
+  <!--[if lt IE 9]>
+  <script src="reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+</head>
+<body>
+
+<script src="d3.v3.min.js"></script>
+<script src="graphlib.min.js"></script>
+<script src="dagre-d3.min.js"></script>
+  <script src="reveal.js/lib/js/head.min.js"></script>
+  <script src="reveal.js/js/reveal.min.js"></script>
+
+
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h1 class="title">Spark</h1>
+    <h2 class="author">T. Verbeiren</h2>
+    <h3 class="date">-22/1/2014</h3>
+</section>
+
+<section id="contents" class="slide level1">
+<h1>Contents</h1>
+<p>Introduction</p>
+<p>Hadoop</p>
+<p>Spark</p>
+<p><em>Practice</em></p>
+<p>Conclusions</p>
+</section>
+<section id="introduction" class="slide level1">
+<h1>Introduction</h1>
+</section>
+<section class="slide level1">
+
+<h2 id="map-reduce">Map / Reduce</h2>
+<p> </p>
+<h3 id="mapper">Mapper</h3>
+<p> </p>
+<h3 id="reducer">Reducer</h3>
+<p> </p>
+<p>(Nothing special)</p>
+</section>
+<section class="slide level1">
+
+<h2 id="an-experiment">An experiment</h2>
+</section>
+<section class="slide level1">
+
+<h2 id="what-if-...">What if ...</h2>
+</section>
+<section class="slide level1">
+
+<h3 id="we-could-just-write">... we could just write</h3>
+<p> </p>
+<pre><code>val y = x map () reduce ()</code></pre>
+</section>
+<section class="slide level1">
+
+<h3 id="this-could-be-extended">... this could be extended</h3>
+<p> </p>
+<pre><code>val y = x map () filter() map () reduce () flatMap () reduce ()</code></pre>
+</section>
+<section class="slide level1">
+
+<h2 id="what-would-be-needed">What would be needed?</h2>
+<p> </p>
+<h3 id="language-support">Language support</h3>
+<!-- Functions as first-class citizens -->
+
+<p> </p>
+<h3 id="platform">Platform</h3>
+<!-- Fast and efficient resource management -->
+
+<p> </p>
+<h3 id="parallel-abstraction-mechanism">Parallel abstraction mechanism</h3>
+<!-- Some kind of abstraction that allows us to deal with what instead of how -->
+
+</section>
+<section id="spark" class="slide level1">
+<h1>Spark</h1>
+</section>
+<section class="slide level1">
+
+<h2 id="languages">3 languages</h2>
+<p><br /> Scala</p>
+<p>Java</p>
+<p>Python</p>
+</section>
+<section class="slide level1">
+
+<h2 id="platform-1">Platform</h2>
+<p> </p>
+<p>Built for low-latency</p>
+</section>
+<section class="slide level1">
+
+<h2 id="abststraction-mechanism">Abststraction mechanism</h2>
+<p> </p>
+<p>RDDs</p>
+</section>
+<section class="slide level1">
+
+<h3 id="rdds">RDDs</h3>
+<p> </p>
+<p>Collection</p>
+<p> </p>
+<p>Accepting <strong>transformations</strong> and <strong>actions</strong></p>
+</section>
+<section class="slide level1">
+
+<h3 id="tranformations">Tranformations</h3>
+<p> </p>
+<ul>
+<li><code>map</code></li>
+<li><code>filter</code></li>
+<li><code>sample</code></li>
+<li><code>union</code> / <code>intersection</code></li>
+<li><code>groupByKey</code></li>
+<li><code>reduceByKey</code></li>
+<li><code>join</code></li>
+<li>...</li>
+</ul>
+</section>
+<section class="slide level1">
+
+<h3 id="actions">Actions</h3>
+<p> </p>
+<ul>
+<li><code>reduce</code></li>
+<li><code>collect</code></li>
+<li><code>count</code></li>
+<li><code>take(n)</code></li>
+<li><code>saveAsTextFile</code></li>
+<li>...</li>
+</ul>
+</section>
+<section class="slide level1">
+
+<pre class="scala"><code>val par = sc.parallelize(1 to 100000)
+// par: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[1] at parallelize at &lt;console&gt;:12
+
+par.count
+//res: Long = 100000
+
+par.toDebugString
+// res: String = ParallelCollectionRDD[1] at parallelize at &lt;console&gt;:12 (96 partitions)
+
+val mapped = par map (x =&gt; (x,x*x))
+// mapped: org.apache.spark.rdd.RDD[(Int, Int)] = MappedRDD[3] at map at &lt;console&gt;:14
+
+mapped take 5
+// res: Array[(Int, Int)] = Array((1,1), (2,4), (3,9), (4,16), (5,25))
+
+mapped map (_._2) reduce ((x,y) =&gt; x+y)
+// res: Int = 1626540144</code></pre>
+</section>
+<section class="slide level1">
+
+<h3 id="lineage">Lineage</h3>
+<div id="simpleLineage" align="center">
+<svg width="600" height="500">
+<g transform="translate(20,20)"/>
+</svg>
+</div>
+
+<script>
+Reveal.addEventListener( 'ready', function( event ) {
+    // event.currentSlide, event.indexh, event.indexv
+    // Create a new directed graph
+    var g = new dagreD3.Digraph();
+
+    g.addNode("a1", { label: "file" });
+    g.addNode("a2", { label: "words" });
+    g.addNode("a3", { label: "mapped" });
+    g.addNode("a4", { label: "grouped" });
+    g.addNode("a5", { label: "result" });
+
+    g.addEdge(null, "a1", "a2", { label: "flatMap" });
+    g.addEdge(null, "a2", "a3", { label: "map / sort" });
+    g.addEdge(null, "a3", "a4", { label: "groupByKey" });
+    g.addEdge(null, "a4", "a5", { label: "reducyByKey" });
+    
+    var renderer = new dagreD3.Renderer();
+    renderer.edgeInterpolate('linear');
+    var svgElement = d3.selectAll("#simpleLineage svg g");
+    var layout = dagreD3.layout()
+//                        .nodeSep(20)
+//                        .rankDir("LR");
+    renderer.layout(layout).run(g, svgElement);
+} );
+</script>
+
+
+</section>
+<section class="slide level1">
+
+<p>Be careful with <em>definitions</em> of <code>map</code> and <code>reduce</code>!</p>
+<p> </p>
+<pre class="scala"><code>// Read a file, e.g. Ulysses from Project Gutenberg
+// and process it similar to Hadoop M/R
+val file = sc.textFile(&quot;Joyce-Ulysses.txt&quot;)
+
+// Retrieve an Array of words in the text
+val words = file.flatMap(_.split(&quot; &quot;))
+
+// Map to (key,value) pairs and sort by word (key)
+val mapped = words map (x =&gt; (x,1)) sortByKey()
+
+// Group by key, result is of form (key, Array(value1, value2, value3, ...))
+val grouped = mapped groupByKey()
+
+// The length of the values array yields the amount
+val result = grouped map {case (k,vs) =&gt; (k,vs.length)}</code></pre>
+<pre class="scala"><code>// But we did not have a reduce here?
+val result = grouped map {case (k,vs) =&gt; (k, vs reduce (_+_))}</code></pre>
+</section>
+<section class="slide level1">
+
+<pre class="scala"><code>val file = sc.textFile(&quot;Joyce-Ulysses.txt&quot;)
+val words = file.flatMap(_.split(&quot; &quot;))
+val mapped = words map (x =&gt; (x,1))
+val result = mapped reduceByKey(_+_)</code></pre>
+</section>
+<section class="slide level1">
+
+<h2 id="and-repl">... and REPL</h2>
+</section>
+<section class="slide level1">
+
+<pre class="scala"><code>val file = sc.textFile(&quot;Joyce-Ulysses.txt&quot;)
+val words = file.flatMap(_.split(&quot; &quot;))
+val mapped = words map (x =&gt; (x,1))
+val result = mapped reduceByKey(_+_)</code></pre>
+</section>
+<section class="slide level1">
+
+<figure>
+<img src="SparkInterface.png" />
+</figure>
+</section>
+<section class="slide level1">
+
+<h2 id="and-distributed-memory-caching">... and distributed memory caching</h2>
+</section>
+<section class="slide level1">
+
+<pre class="scala"><code>val par = sc.parallelize(1 to 100000)
+// par: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[1] at parallelize at &lt;console&gt;:12
+
+val parCached = par.persist
+// parCached: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[1] at parallelize at &lt;console&gt;:12
+
+parCached.count
+// res: Long = 100000
+
+parCached map(x =&gt; (x,x*x)) map (_._2) reduce ((x,y) =&gt; x+y)
+// res: Int = 1626540144</code></pre>
+</section>
+<section id="some-more-examples" class="slide level1">
+<h1>Some more examples</h1>
+</section>
+<section class="slide level1">
+
+</section>
+<section class="slide level1">
+
+</section>
+<section class="slide level1">
+
+</section>
+<section class="slide level1">
+
+<h2 id="a-title...">A title...</h2>
+</section>
+<section class="slide level1">
+
+<style>
+#barchart svg {
+    overflow: hidden;
+}
+
+.node rect {
+    stroke: #333;
+    stroke-width: 1.5px;
+    fill: #fff;
+}
+
+text {
+  font-weight: 300;
+  font-size: 20px;
+}
+
+.edgeLabel rect {
+    fill: none;
+    min-width: 60px;
+}
+
+.edgePath {
+    stroke: #333;
+    stroke-width: 1.5px;
+    fill: none;
+}
+</style>
+
+
+</section>
+<section id="another-title" class="slide level1">
+<h1>Another title</h1>
+</section>
+<section class="slide level1">
+
+<pre class="bash"><code>tmux
+isub -n 2
+module load hadoop-2.3.0
+module load spark-0.9.0-hadoop-2.3.0
+
+hadoop fs -mkdir /user
+hadoop fs -mkdir /user/toniv 
+hadoop fs -copyFromLocal data/NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage /user/toniv/
+hadoop fs -copyFromLocal data/201101_encode_motifs_in_tf_peaks.bed /user/toniv/
+hadoop fs -copyFromLocal data/Joyce-Ulysses.txt /user/toniv/
+hdfs dfs -setrep -w 3 /user/toniv
+# Start the Spark Shell
+SPARK_MEM=32g MASTER=spark://ly-1-10:7077 bin/spark-shell</code></pre>
+<pre class="scala"><code>// Load files from HDFS
+val covFile = sc.textFile(&quot;NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage&quot;,8)
+val bedFile = sc.textFile(&quot;201101_encode_motifs_in_tf_peaks.bed&quot;,8)
+
+class covData(val chr: String, val pos: Int, val cov: Int) {
+    def this(line: Array[String]) {
+     this(line(0).toString, line(1).toInt, line(2).toInt)
+    }
+}
+
+class tfsData(val chr: String, val pos1: Int, val pos2:Int, val tf: String) {
+    def this(line: Array[String]) {
+     this(line(0).toString, line(1).toInt, line(2).toInt, line(3).toString)
+    }
+}
+
+
+// Turn them into an RDD of objects
+val cov = covFile.map(_.split(&quot;\\s+&quot;)).map(new covData(_))
+val tfs = bedFile.map(_.split(&quot;\\s+&quot;)).map(new tfsData(_))
+
+
+// Count the number of items in both datasets
+cov.count
+tfs.count
+
+// Cache
+val ccov = cov cache
+val ctfs = tfs cache
+
+// Count again
+ccov.count
+
+// This again takes a lot of time!?! Not this time!
+ccov.count
+
+// The same for ctfs
+ctfs.count
+ctfs.count
+
+//ctfs take 5
+
+val kvcov = ccov.map(x =&gt; (x.pos,(x.cov))).cache
+val kvtfs = ctfs.filter(x =&gt; x.chr == &quot;chr19&quot;).map(x =&gt; (x.pos1,(x.pos2,x.tf)))
+
+// Cache the coverage data, collect the rest
+kvcov.count
+val tfs = kvtfs map {case(x,(y,z))=&gt; (x,y,z)} collect 
+
+val cjoined = kvcov.join(kvtfs)
+
+// Waaaw, that&#39;s fast! In fact, nothing happened yet.
+// select 5 entries:
+
+val flatjoined = cjoined map { case(x,(y,(z,zz))) =&gt; (x,z,zz,y) }
+
+flatjoined take 5</code></pre>
+</section>
+<section id="some-additional-info..." class="slide level1">
+<h1>Some additional info...</h1>
+<pre><code>cd server
+cat local.conf | sed &#39;/^\ *master/ c\  master = &quot;&#39;&quot;$MASTER&quot;\&quot;&gt; local.tmp
+cp local.conf local.backup
+cp local.tmp local.conf
+./server_start.sh
+cd ~</code></pre>
+<pre><code>val file = textFile(&quot;/var/log/system.log&quot;)
+val words = file.flatMap(_.split(&quot; &quot;))
+val mapped = words map (x =&gt; (x,1))
+val grouped = mapped.groupBy(_._1)
+val res = grouped map (x =&gt; x._2.length)</code></pre>
+<pre><code>if (a._1 == b._1) (a._1, a._2 + b._2) else (b._1,b._2)</code></pre>
+</section>
+    </div>
+  </div>
+
+
+
+
+  <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: false,
+        progress: true,
+        history: true,
+        center: true,
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+        theme: 'moon', // available themes are in /css/theme
+        transition: 'fade', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+//          { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+//          { src: 'reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+//          { src: 'reveal.js/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; }, }
+//          { src: 'reveal.js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+]});
+    </script>
+  </body>
+</html>
