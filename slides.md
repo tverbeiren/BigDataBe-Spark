@@ -127,7 +127,7 @@ val y = x map () filter() map () flatMap () reduce ()
 
 \
 
-![](pics/languages.png)
+![](pics/Languages.png)
 
 - - -
 
