@@ -68,7 +68,7 @@
 </section>
 <section class="slide level1">
 
-<h2 id="an-experiment">An experiment</h2>
+<h2 id="an-experiment">An experiment ?</h2>
 </section>
 <section class="slide level1">
 
@@ -172,6 +172,7 @@
 
 val N = 10000000
 
+// Generate a sequence of numbers and distribute
 val par = parallelize(1 to N)
 // par: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[1] 
 //   at parallelize at &lt;console&gt;:12</code></pre>
@@ -225,7 +226,7 @@ println(&quot;Pi is roughly &quot; + 4.0 * count / N)</code></pre>
 // and process it similar to Hadoop M/R
 val file = textFile(&quot;Joyce-Ulysses.txt&quot;)
 
-// Retrieve an Array of words in the text
+// Convert to an array of words in the text
 val words = file.flatMap(_.split(&quot; &quot;))
 
 // Map to (key,value) pairs
@@ -247,7 +248,7 @@ val result = grouped map {case (k,vs) =&gt; (k,vs.length)}
 // and process it similar to Hadoop M/R
 val file = textFile(&quot;Joyce-Ulysses.txt&quot;)
 
-// Retrieve an Array of words in the text
+// Convert to an array of words in the text
 val words = file.flatMap(_.split(&quot; &quot;))
 
 // Map to (key,value) pairs
@@ -265,7 +266,7 @@ val result = grouped map {case (k,vs) =&gt; (k, vs reduce (_+_))}</code></pre>
 
 <p>In Spark, we would use:</p>
 <p> </p>
-<pre class="scala"><code>val file = sc.textFile(&quot;Joyce-Ulysses.txt&quot;)
+<pre class="scala"><code>val file = textFile(&quot;Joyce-Ulysses.txt&quot;)
 val words = file.flatMap(_.split(&quot; &quot;))
 val mapped = words map (word =&gt; (word,1))
 val result = mapped reduceByKey(_+_)</code></pre>
@@ -287,88 +288,28 @@ val result = mapped reduceByKey(_+_)</code></pre>
 <section class="slide level1">
 
 <h2 id="and-distributed-memory-caching">... and distributed memory caching</h2>
-</section>
-<section class="slide level1">
-
-<p><strong>TODO</strong></p>
-<pre class="scala"><code>val file = sc.textFile(&quot;Joyce-Ulysses.txt&quot;)
+<p> </p>
+<pre class="scala"><code>val file = textFile(&quot;Joyce-Ulysses.txt&quot;)
 val words = file.flatMap(_.split(&quot; &quot;))
 val mapped = words map (word =&gt; (word,1))
-val result = mapped reduceByKey(_+_)</code></pre>
-</section>
-<section id="some-more-examples" class="slide level1">
-<h1>Some more examples</h1>
-</section>
-<section class="slide level1">
+// Cache the RDD for later use
+val cached = mapped cache()
+// Use the cached version
+val result = cached reduceByKey(_+_)
+// Oops, nothing happens?
+result.collect
+// Laziness... oh my
+result.collect</code></pre>
+<!-- So yes, caching works... but also: highly interactive! -->
 
-<h2 id="coverage-and-transcription-factors">Coverage and transcription factors</h2>
-<p> </p>
-<p>TODO</p>
-</section>
-<section class="slide level1">
-
-<pre class="scala"><code>// Load files from HDFS
-val covFile = sc.textFile(&quot;NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage&quot;,8)
-val bedFile = sc.textFile(&quot;201101_encode_motifs_in_tf_peaks.bed&quot;,8)
-
-class covData(val chr: String, val pos: Int, val cov: Int) {
-    def this(line: Array[String]) {
-     this(line(0).toString, line(1).toInt, line(2).toInt)
-    }
-}
-
-class tfsData(val chr: String, val pos1: Int, val pos2:Int, val tf: String) {
-    def this(line: Array[String]) {
-     this(line(0).toString, line(1).toInt, line(2).toInt, line(3).toString)
-    }
-}
-
-// Turn them into an RDD of objects
-val cov = covFile.map(_.split(&quot;\\s+&quot;)).map(new covData(_))
-val tfs = bedFile.map(_.split(&quot;\\s+&quot;)).map(new tfsData(_))
-
-// Count the number of items in both datasets
-cov.count
-tfs.count
-
-// Cache
-val ccov = cov cache
-val ctfs = tfs cache
-
-// Count again
-ccov.count
-
-// This again takes a lot of time!?! Not this time!
-ccov.count
-
-// The same for ctfs
-ctfs.count
-ctfs.count
-
-//ctfs take 5
-val kvcov = ccov.map(x =&gt; (x.pos,(x.cov))).cache
-val kvtfs = ctfs.filter(x =&gt; x.chr == &quot;chr19&quot;).map(x =&gt; (x.pos1,(x.pos2,x.tf)))
-
-// Cache the coverage data, collect the rest
-kvcov.count
-val tfs = kvtfs map {case(x,(y,z))=&gt; (x,y,z)} collect 
-
-val cjoined = kvcov.join(kvtfs)
-
-// Waaaw, that&#39;s fast! In fact, nothing happened yet.
-// select 5 entries:
-val flatjoined = cjoined map { case(x,(y,(z,zz))) =&gt; (x,z,zz,y) }
-
-flatjoined take 5</code></pre>
 </section>
 <section class="slide level1">
 
-<h2 id="visualization-of-genomic-data">Visualization of genomic data</h2>
-<p> </p>
-<p>TODO</p>
+<h2 id="and-interactive-use">... and interactive use</h2>
 </section>
-<section id="ecosystem" class="slide level1">
-<h1>Ecosystem</h1>
+<section class="slide level1">
+
+<h2 id="and-the-ecosystem">... and the Ecosystem</h2>
 <ul>
 <li>Spark SQL</li>
 <li>Spark Streaming</li>
@@ -376,6 +317,134 @@ flatjoined take 5</code></pre>
 <li>MLlib</li>
 <li>GraphX</li>
 </ul>
+</section>
+<section class="slide level1">
+
+<h2 id="and-predicting-germany---brasil">... and predicting Germany - Brasil</h2>
+<p> </p>
+<pre class="scala"><code>val data = textFile(&quot;WorlCupData.dat&quot;)
+val parsedData = data.map(x =&gt; parse(x)).cache()
+val model = trainModel(parsedData)
+val predict = model(&quot;Germany&quot;,&quot;Brasil&quot;)
+predict.score
+// ... Buffer overflow ...</code></pre>
+</section>
+<section id="not-covered" class="slide level1">
+<h1>Not covered</h1>
+</section>
+<section class="slide level1">
+
+<h2 id="rdds-under-the-hood">RDDs Under the Hood</h2>
+<p> </p>
+<p><a href="http://dl.acm.org/citation.cfm?id=2228301">http://dl.acm.org/citation.cfm?id=2228301</a></p>
+<p> </p>
+<figure>
+<img src="pics/RDDpaper-full.png" />
+</figure>
+</section>
+<section class="slide level1">
+
+<h2 id="configuration-performance">Configuration &amp; Performance</h2>
+<p> </p>
+<p><a href="https://spark.apache.org/docs/latest/configuration.html">https://spark.apache.org/docs/latest/configuration.html</a></p>
+<p><a href="https://spark.apache.org/docs/latest/tuning.html">https://spark.apache.org/docs/latest/tuning.html</a></p>
+<p> </p>
+<figure>
+<img src="pics/PerformanceTuning.png" />
+</figure>
+</section>
+<section class="slide level1">
+
+<h2 id="installation-deployment">Installation &amp; Deployment</h2>
+<p> </p>
+<p><a href="https://spark.apache.org/docs/latest/cluster-overview.html">https://spark.apache.org/docs/latest/cluster-overview.html</a></p>
+<p> </p>
+<figure>
+<img src="pics/Deployment.png" />
+</figure>
+</section>
+<section id="some-more-examples" class="slide level1">
+<h1>Some more examples</h1>
+</section>
+<section class="slide level1">
+
+<h2 id="genomic-data">Genomic Data</h2>
+<!-- Terrabytes of data roll out of sequencing machines daily. What are we going to do with all this data? -->
+
+</section>
+<section class="slide level1">
+
+<figure>
+<img src="pics/BinnedAggregation.png" />
+</figure>
+</section>
+<section class="slide level1">
+
+<pre class="scala"><code>// Load files from HDFS
+val covFile = sc.textFile(&quot;NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage&quot;,8)
+val bedFile = sc.textFile(&quot;201101_encode_motifs_in_tf_peaks.bed&quot;,8)
+
+// Class to hold records from coverage data
+class covData(val chr: String, val pos: Int, val cov: Int) {
+    def this(line: Array[String]) {
+     this(line(0).toString, line(1).toInt, line(2).toInt)
+    }
+}
+
+// Class to hold records from Transcription Factor data
+class tfsData(val chr: String, val pos1: Int, val pos2:Int, val tf: String) {
+    def this(line: Array[String]) {
+     this(line(0).toString, line(1).toInt, line(2).toInt, line(3).toString)
+    }
+}</code></pre>
+</section>
+<section class="slide level1">
+
+<pre class="scala"><code>// Turn input files into an RDD of objects
+val cov = covFile.map(_.split(&quot;\\s+&quot;)).map(new covData(_))
+val tfs = bedFile.map(_.split(&quot;\\s+&quot;)).map(new tfsData(_))
+
+// Count the number of items in both datasets
+cov.count
+tfs.count
+
+// Cache in memory
+val ccov = cov cache
+val ctfs = tfs cache
+
+// Count once for the caching to occur
+ccov.count
+ctfs.count</code></pre>
+</section>
+<section class="slide level1">
+
+<pre class="scala"><code>// Turn coverage data into K/V pairs
+val kvcov = ccov.map(x =&gt; (x.pos,(x.cov))).cache
+// Turn TF data into K/V pairs
+val kvtfs = ctfs.filter(x =&gt; x.chr == &quot;chr19&quot;).map(x =&gt; (x.pos1,(x.pos2,x.tf)))
+
+// Activate the caching of the coverage data
+kvcov.count
+
+// Join both datasets together by key
+val cjoined = kvcov.join(kvtfs)
+
+// Waaaw, that&#39;s fast! In fact, nothing happened yet.
+// select 5 entries to see the result
+val flatjoined = cjoined map { case(x,(y,(z,zz))) =&gt; (x,z,zz,y) }
+flatjoined take 5</code></pre>
+</section>
+<section class="slide level1">
+
+<h2 id="visualization-of-genomic-data">Visualization of genomic data</h2>
+<!-- This is really the reason we invest in Spark -->
+
+</section>
+<section class="slide level1">
+
+<figure>
+<img src="pics/BinnedAggregation.png" />
+</figure>
 </section>
 <section id="the-end" class="slide level1">
 <h1>The end</h1>

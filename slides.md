@@ -41,7 +41,7 @@ Conclusions
 
 - - -
 
-## An experiment
+## An experiment ?
 
 - - -
 
@@ -168,6 +168,7 @@ import sc._
 
 val N = 10000000
 
+// Generate a sequence of numbers and distribute
 val par = parallelize(1 to N)
 // par: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[1] 
 //   at parallelize at <console>:12
@@ -233,7 +234,7 @@ Hadoop M/R in Spark
 // and process it similar to Hadoop M/R
 val file = textFile("Joyce-Ulysses.txt")
 
-// Retrieve an Array of words in the text
+// Convert to an array of words in the text
 val words = file.flatMap(_.split(" "))
 
 // Map to (key,value) pairs
@@ -259,7 +260,7 @@ Be careful with _definitions_ of `map` and `reduce`!
 // and process it similar to Hadoop M/R
 val file = textFile("Joyce-Ulysses.txt")
 
-// Retrieve an Array of words in the text
+// Convert to an array of words in the text
 val words = file.flatMap(_.split(" "))
 
 // Map to (key,value) pairs
@@ -281,7 +282,7 @@ In Spark, we would use:
 \ 
 
 ```scala
-val file = sc.textFile("Joyce-Ulysses.txt")
+val file = textFile("Joyce-Ulysses.txt")
 val words = file.flatMap(_.split(" "))
 val mapped = words map (word => (word,1))
 val result = mapped reduceByKey(_+_)
@@ -303,16 +304,95 @@ val result = mapped reduceByKey(_+_)
 
 ## ... and distributed memory caching
 
-- - -
-
-**TODO**
+\ 
 
 ```scala
-val file = sc.textFile("Joyce-Ulysses.txt")
+val file = textFile("Joyce-Ulysses.txt")
 val words = file.flatMap(_.split(" "))
 val mapped = words map (word => (word,1))
-val result = mapped reduceByKey(_+_)
+// Cache the RDD for later use
+val cached = mapped cache()
+// Use the cached version
+val result = cached reduceByKey(_+_)
+// Oops, nothing happens?
+result.collect
+// Laziness... oh my
+result.collect
 ```
+
+<!-- So yes, caching works... but also: highly interactive! -->
+
+- - -
+
+## ... and interactive use
+
+- - -
+
+## ... and the Ecosystem
+
+- Spark SQL
+- Spark Streaming
+- Shark
+- MLlib
+- GraphX
+
+- - -
+
+## ... and predicting Germany - Brasil
+
+\ 
+
+```scala
+val data = textFile("WorlCupData.dat")
+val parsedData = data.map(x => parse(x)).cache()
+val model = trainModel(parsedData)
+val predict = model("Germany","Brasil")
+predict.score
+// ... Buffer overflow ...
+```
+
+- - -
+
+# Not covered
+
+- - -
+
+## RDDs Under the Hood
+
+\ 
+
+<http://dl.acm.org/citation.cfm?id=2228301>
+
+\ 
+
+![](pics/RDDpaper-full.png)
+
+- - -
+
+## Configuration & Performance
+
+\ 
+
+<https://spark.apache.org/docs/latest/configuration.html>
+
+<https://spark.apache.org/docs/latest/tuning.html>
+
+\ 
+
+![](pics/PerformanceTuning.png)
+
+
+- - -
+
+## Installation & Deployment
+
+\ 
+
+<https://spark.apache.org/docs/latest/cluster-overview.html>
+
+\ 
+
+![](pics/Deployment.png)
 
 - - -
 
@@ -320,11 +400,14 @@ val result = mapped reduceByKey(_+_)
 
 - - -
 
-## Coverage and transcription factors 
+## Genomic Data
 
-\ 
+<!-- Terrabytes of data roll out of sequencing machines daily. What are we going to do with all this data? -->
 
-TODO
+- - -
+
+![](pics/BinnedAggregation.png)
+
 
 - - -
 
@@ -333,19 +416,25 @@ TODO
 val covFile = sc.textFile("NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage",8)
 val bedFile = sc.textFile("201101_encode_motifs_in_tf_peaks.bed",8)
 
+// Class to hold records from coverage data
 class covData(val chr: String, val pos: Int, val cov: Int) {
     def this(line: Array[String]) {
      this(line(0).toString, line(1).toInt, line(2).toInt)
     }
 }
 
+// Class to hold records from Transcription Factor data
 class tfsData(val chr: String, val pos1: Int, val pos2:Int, val tf: String) {
     def this(line: Array[String]) {
      this(line(0).toString, line(1).toInt, line(2).toInt, line(3).toString)
     }
 }
+```
 
-// Turn them into an RDD of objects
+- - -
+
+```scala
+// Turn input files into an RDD of objects
 val cov = covFile.map(_.split("\\s+")).map(new covData(_))
 val tfs = bedFile.map(_.split("\\s+")).map(new tfsData(_))
 
@@ -353,34 +442,32 @@ val tfs = bedFile.map(_.split("\\s+")).map(new tfsData(_))
 cov.count
 tfs.count
 
-// Cache
+// Cache in memory
 val ccov = cov cache
 val ctfs = tfs cache
 
-// Count again
+// Count once for the caching to occur
 ccov.count
-
-// This again takes a lot of time!?! Not this time!
-ccov.count
-
-// The same for ctfs
 ctfs.count
-ctfs.count
+```
 
-//ctfs take 5
+- - -
+
+```scala
+// Turn coverage data into K/V pairs
 val kvcov = ccov.map(x => (x.pos,(x.cov))).cache
+// Turn TF data into K/V pairs
 val kvtfs = ctfs.filter(x => x.chr == "chr19").map(x => (x.pos1,(x.pos2,x.tf)))
 
-// Cache the coverage data, collect the rest
+// Activate the caching of the coverage data
 kvcov.count
-val tfs = kvtfs map {case(x,(y,z))=> (x,y,z)} collect 
 
+// Join both datasets together by key
 val cjoined = kvcov.join(kvtfs)
 
 // Waaaw, that's fast! In fact, nothing happened yet.
-// select 5 entries:
+// select 5 entries to see the result
 val flatjoined = cjoined map { case(x,(y,(z,zz))) => (x,z,zz,y) }
-
 flatjoined take 5
 ```
 
@@ -388,19 +475,13 @@ flatjoined take 5
 
 ## Visualization of genomic data
 
-\ 
-
-TODO
+<!-- This is really the reason we invest in Spark -->
 
 - - -
 
-# Ecosystem
+![](pics/BinnedAggregation.png)
 
-- Spark SQL
-- Spark Streaming
-- Shark
-- MLlib
-- GraphX
+
 
 - - -
 
