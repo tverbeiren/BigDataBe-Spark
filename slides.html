@@ -78,11 +78,11 @@
 
 <h2 id="map-reduce">Map / Reduce</h2>
 <p> </p>
-<h3 id="mapper">Mapper</h3>
+<h3 id="map"><code>map</code></h3>
 <p> </p>
-<h3 id="reducer">Reducer</h3>
+<h3 id="reduce"><code>reduce</code></h3>
 <p> </p>
-<p>(Nothing special!)</p>
+<p>(Nothing special ?!)</p>
 </section>
 <section class="slide level1">
 
@@ -201,6 +201,11 @@ public class WordCount {
 </section>
 <section class="slide level1">
 
+<p> </p>
+<figure>
+<img src="pics/spark-logo.png" />
+</figure>
+<p> </p>
 <ul>
 <li>Berkeley University</li>
 <li>Apache Project</li>
@@ -209,10 +214,6 @@ public class WordCount {
 <li>Supported by <a href="http://databricks.com/">DataBricks</a></li>
 <li>Used by ...</li>
 </ul>
-<p> </p>
-<figure>
-<img src="pics/spark-logo.png" />
-</figure>
 </section>
 <section class="slide level1">
 
@@ -269,6 +270,8 @@ public class WordCount {
 </section>
 <section class="slide level1">
 
+<h3 id="the-first-example">The first example</h3>
+<p> </p>
 <svg width="400" height="400">
   
 <rect width="400" height="400" style="fill:rgb(0,0,0);stroke-width:0;stroke:rgb(0,0,0)" /> <circle cx="200" cy="200" r="200" stroke="black" stroke-width="0" fill="yellow" /> <line x1="200" y1="200" x2="360" y2="80" style="stroke:rgb(0,0,0);stroke-width:4" /> <text x="280" y="80" fill="black">r = 1/2</text>
@@ -330,7 +333,7 @@ println(&quot;Pi is roughly &quot; + 4.0 * count / N)</code></pre>
 
 <p>Hadoop M/R in Spark</p>
 <p> </p>
-<pre class="scala"><code>// Read a file, e.g. Ulysses from Project Gutenberg
+<pre class="scala"><code>// Read a file from Hadoop FS, (e.g. Ulysses / Project Gutenberg)
 // and process it similar to Hadoop M/R
 val file = textFile(&quot;Joyce-Ulysses.txt&quot;)
 
@@ -352,7 +355,7 @@ val result = grouped map {case (k,vs) =&gt; (k,vs.length)}
 
 <p>Be careful with <em>definitions</em> of <code>map</code> and <code>reduce</code>!</p>
 <p> </p>
-<pre class="scala"><code>// Read a file, e.g. Ulysses from Project Gutenberg
+<pre class="scala"><code>// Read a file from Hadoop FS, (e.g. Ulysses / Project Gutenberg)
 // and process it similar to Hadoop M/R
 val file = textFile(&quot;Joyce-Ulysses.txt&quot;)
 
@@ -451,9 +454,9 @@ predict.score
 </section>
 <section class="slide level1">
 
-<h2 id="better">Better?</h2>
-<h2 id="faster">Faster?</h2>
-<h2 id="easier">Easier?</h2>
+<h2 id="better">Better ?</h2>
+<h2 id="faster">Faster ?</h2>
+<h2 id="easier">Easier ?</h2>
 <h2 id="section">...</h2>
 </section>
 <section class="slide level1">
@@ -504,13 +507,25 @@ predict.score
 </section>
 <section class="slide level1">
 
-<p>3 billion base pairs (3.2 x 10^9)</p>
+<!-- Human DNA consists of around 3 billion base-pairs. this amounts to approximately 3GB of hard drive storage. This is not too much. The complexity of DNA analysis is due to something else: 
+
+1. The machines that read the DNA usually do not do that in an orderly fashion.
+2. They make a lot of errors when reading base-pairs
+3. In order to cope with the errors, multiple copies of the DNA are read
+
+A whole pipeline is then executed in order to reconstruct the original DNA.
+
+Below, we deal with 2 types of information about DNA: coverage information and transcription factors.
+ -->
+
+<p>3 billion base pairs (<span class="math">\(3.2 \times 10^9\)</span>)</p>
 <p>Packaged in chromosomes</p>
 <p>~ 3GB for one human</p>
 <p> </p>
 <p>Analysis requires a lot of processing power and storage</p>
 <p> </p>
-<p><strong>Transcription Factors</strong>: bind to DNA at certain location <strong>Coverage</strong>: basepair occurence in sequencing</p>
+<p><strong>Transcription Factors</strong>: proteins that bind on region</p>
+<p><strong>Coverage</strong>: basepair occurence in sequencing</p>
 </section>
 <section class="slide level1">
 
@@ -600,11 +615,13 @@ val cjoined = kvcov.join(kvtfs)
 // Waaaw, that&#39;s fast! In fact, nothing happened yet.
 // select 5 entries to see the result but reformat first
 val flatjoined = cjoined map { case(x,(y,(z,zz))) =&gt; (x,z,zz,y) }
-flatjoined take 5</code></pre>
+flatjoined take 5
+
+flatjoined.toDebugString</code></pre>
 </section>
 <section class="slide level1">
 
-<h2 id="visualization-of-genomic-data">Visualization of genomic data</h2>
+<h2 id="visualization-of-big-data">Visualization of Big Data</h2>
 <!-- This is really the reason we invest in Spark -->
 
 </section>
@@ -624,12 +641,6 @@ flatjoined take 5</code></pre>
 <section class="slide level1">
 
 <figure>
-<img src="pics/locustree.png" />
-</figure>
-</section>
-<section class="slide level1">
-
-<figure>
 <img src="pics/layers.png" />
 </figure>
 </section>
@@ -637,6 +648,12 @@ flatjoined take 5</code></pre>
 
 <figure>
 <img src="pics/interface2.png" />
+</figure>
+</section>
+<section class="slide level1">
+
+<figure>
+<img src="pics/locustree.png" />
 </figure>
 </section>
 <section class="slide level1">
@@ -731,6 +748,14 @@ flatjoined take 5</code></pre>
 
 <figure>
 <img src="pics/Results.png" />
+</figure>
+</section>
+<section class="slide level1">
+
+<p>Paper submitted to LDAV 2014</p>
+<p> </p>
+<figure>
+<img src="pics/LDAV.png" />
 </figure>
 </section>
 <section id="the-end" class="slide level1">

@@ -5,6 +5,9 @@ val N = 10000000
 // Generate a sequence of numbers and distribute
 val par = parallelize(1 to N)
 
+// How many chunks?
+par.toDebugString
+
 // Generate a point in 2D unit square
 def randomPoint:(Double,Double) = {
     val x = Math.random()
@@ -75,7 +78,7 @@ val result = grouped map {case (k,vs) => (k, vs reduce (_+_))}
 
 // In Spark, we would do something like this:
 val file = textFile("Joyce-Ulysses.txt")
-val words = file.flatMap(_.split(" "))
+val words = file.flatMap(_.split(" ")) filter(x => x != "")
 val mapped = words map (word => (word,1))
 val result = mapped reduceByKey(_+_)
 result collect
@@ -84,8 +87,8 @@ result collect
 
 // Caching !!!
 
-val file = textFile("Joyce-Ulysses.txt")
-val words = file.flatMap(_.split(" "))
+val file = textFile("Joyce-Ulysses.txt",4)
+val words = file flatMap(_.split(" ")) filter(x => x != "")
 val mapped = words map (word => (word,1))
 // Cache the RDD for later use
 val cached = mapped cache()
@@ -154,6 +157,8 @@ val cjoined = kvcov.join(kvtfs)
 // select 5 entries to see the result but reformat first
 val flatjoined = cjoined map { case(x,(y,(z,zz))) => (x,z,zz,y) }
 flatjoined take 5
+
+flatjoined.toDebugString
 
 // ---------------------------
 

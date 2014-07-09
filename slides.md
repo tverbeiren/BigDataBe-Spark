@@ -46,15 +46,15 @@ Example(s)
 
 \ 
 
-### Mapper
+### `map`
 
 \ 
 
-### Reducer
+### `reduce`
 
 \ 
 
-(Nothing special!)
+(Nothing special ?!)
 
 - - -
 
@@ -184,16 +184,18 @@ val y = x map () filter() map () flatMap () reduce ()
 
 - - -
 
+\ 
+
+![](pics/spark-logo.png)
+
+\ 
+
 - Berkeley University
 - Apache Project
 - v1.0 released on May 30d 2014
 - Written in Scala
 - Supported by [DataBricks](http://databricks.com/)
 - Used by ...
-
-\ 
-
-![](pics/spark-logo.png)
 
 - - -
 
@@ -260,6 +262,10 @@ Accepting **transformations** and **actions**
 - ...
 
 - - -
+
+### The first example
+
+\ 
 
 <svg width="400" height="400">
   <rect width="400" height="400" style="fill:rgb(0,0,0);stroke-width:0;stroke:rgb(0,0,0)" />
@@ -336,7 +342,7 @@ Hadoop M/R in Spark
 \ 
 
 ```scala
-// Read a file, e.g. Ulysses from Project Gutenberg
+// Read a file from Hadoop FS, (e.g. Ulysses / Project Gutenberg)
 // and process it similar to Hadoop M/R
 val file = textFile("Joyce-Ulysses.txt")
 
@@ -362,7 +368,7 @@ Be careful with _definitions_ of `map` and `reduce`!
 \ 
 
 ```scala
-// Read a file, e.g. Ulysses from Project Gutenberg
+// Read a file from Hadoop FS, (e.g. Ulysses / Project Gutenberg)
 // and process it similar to Hadoop M/R
 val file = textFile("Joyce-Ulysses.txt")
 
@@ -467,11 +473,11 @@ predict.score
 
 - - -
 
-## Better?
+## Better ?
 
-## Faster?
+## Faster ?
 
-## Easier?
+## Easier ?
 
 ## ...
 
@@ -530,7 +536,18 @@ predict.score
 
 - - -
 
-3 billion base pairs (3.2 x 10^9)
+<!-- Human DNA consists of around 3 billion base-pairs. this amounts to approximately 3GB of hard drive storage. This is not too much. The complexity of DNA analysis is due to something else: 
+
+1. The machines that read the DNA usually do not do that in an orderly fashion.
+2. They make a lot of errors when reading base-pairs
+3. In order to cope with the errors, multiple copies of the DNA are read
+
+A whole pipeline is then executed in order to reconstruct the original DNA.
+
+Below, we deal with 2 types of information about DNA: coverage information and transcription factors.
+ -->
+
+3 billion base pairs ($3.2 \times 10^9$)
 
 Packaged in chromosomes
 
@@ -542,7 +559,8 @@ Analysis requires a lot of processing power and storage
 
 \ 
 
-**Transcription Factors**: bind to DNA at certain location
+**Transcription Factors**: proteins that bind on region
+
 **Coverage**: basepair occurence in sequencing
 
 - - -
@@ -586,7 +604,6 @@ chr8    128562635   128562649   p300    .   -
 chr9    14315969    14315982    Egr-1   .   -
 chrX    101409366   101409384   CTCF    .   +
 ```
-
 
 - - -
 
@@ -648,11 +665,13 @@ val cjoined = kvcov.join(kvtfs)
 // select 5 entries to see the result but reformat first
 val flatjoined = cjoined map { case(x,(y,(z,zz))) => (x,z,zz,y) }
 flatjoined take 5
+
+flatjoined.toDebugString
 ```
 
 - - -
 
-## Visualization of genomic data
+## Visualization of Big Data
 
 <!-- This is really the reason we invest in Spark -->
 
@@ -668,15 +687,15 @@ flatjoined take 5
 
 - - -
 
-![](pics/locustree.png)
-
-- - -
-
 ![](pics/layers.png)
 
 - - -
 
 ![](pics/interface2.png)
+
+- - -
+
+![](pics/locustree.png)
 
 - - -
 
@@ -772,6 +791,14 @@ object CovQuery extends SparkJob with NamedRddSupport {
 - - -
 
 ![](pics/Results.png)
+
+- - -
+
+Paper submitted to LDAV 2014
+
+\ 
+
+![](pics/LDAV.png)
 
 - - -
 
