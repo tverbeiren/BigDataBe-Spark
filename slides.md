@@ -9,11 +9,11 @@ Introduction
 
 Spark
 
-Examples
+Not covered
 
 Ecosystem
 
-Conclusions
+Example(s)
 
 - - -
 
@@ -21,7 +21,15 @@ Conclusions
 
 - - -
 
+![](pics/I.png)
+
+- - -
+
 # Introduction
+
+- - -
+
+## Distribution is hard ...
 
 - - - 
 
@@ -37,11 +45,15 @@ Conclusions
 
 \ 
 
-(Nothing special)
+(Nothing special!)
 
 - - -
 
-## An experiment ?
+## Word Count in M/R
+
+- - -
+
+![](pics/MapReduceWordCountOverview.png)
 
 - - -
 
@@ -73,21 +85,24 @@ val y = x map () filter() map () flatMap () reduce ()
 
 \ 
 
-1. Language support
-
-<!-- Functions as first-class citizens -->
-
-\ 
-
-2. Platform
+1. Platform
 
 <!-- Fast and efficient resource management -->
 
 \ 
 
-3. Parallel abstraction mechanism
+2. Parallel abstraction mechanism
 
 <!-- Some kind of abstraction that allows us to deal with what instead of how -->
+
+\ 
+
+3. Language support
+
+<!-- Functions as first-class citizens -->
+
+\ 
+
 
 - - -
 
@@ -95,15 +110,24 @@ val y = x map () filter() map () flatMap () reduce ()
 
 - - -
 
-## 3 languages
+- Berkeley University
+- Apache Project
+- v1.0 released on May 30d 2014
+- Written in Scala
+- Supported by [DataBricks](http://databricks.com/)
+- Used by ...
+
+\ 
+
+![](pics/spark-logo.png)
+
+- - -
+
+## Language support
 
 \
 
-Scala
-
-Java
-
-Python
+![](pics/languages.png)
 
 - - -
 
@@ -163,6 +187,20 @@ Accepting **transformations** and **actions**
 
 - - -
 
+<svg width="400" height="400">
+  <rect width="400" height="400" style="fill:rgb(0,0,0);stroke-width:0;stroke:rgb(0,0,0)" />
+  <circle cx="200" cy="200" r="200" stroke="black" stroke-width="0" fill="yellow" />
+  <line x1="200" y1="200" x2="360" y2="80" style="stroke:rgb(0,0,0);stroke-width:4" />
+  <text x="280" y="80" fill="black">r = 1/2</text>
+</svg>
+
+\ 
+
+$$\text{P}(\text{hitting circle}) \approx
+\text{Surface circle} = \frac{\pi}{4}$$
+
+- - -
+
 ```scala
 import sc._
 
@@ -191,7 +229,7 @@ def inCircle(point:(Double,Double)):Int = {
 
 - - -
 
-```
+```scala
 // List of hits yes/no
 val inCircleList = par map(i => inCircle(randomPoint))
 
@@ -205,7 +243,7 @@ inCircleList.toDebugString
 val total = inCircleList reduce (_+_)
 
 // Probability of hitting the circle *4 = Pi
-val P = 4. * total / N
+val S = 4. * total / N
 ```
 
 - - -
@@ -286,6 +324,7 @@ val file = textFile("Joyce-Ulysses.txt")
 val words = file.flatMap(_.split(" "))
 val mapped = words map (word => (word,1))
 val result = mapped reduceByKey(_+_)
+result collect
 ```
 
 - - -
@@ -330,15 +369,15 @@ result.collect
 
 ## ... and the Ecosystem
 
-- Spark SQL
-- Spark Streaming
-- Shark
-- MLlib
-- GraphX
+\ 
 
-- - -
+- [Spark SQL](http://spark.apache.org/sql/)
+- [Spark Streaming](http://spark.apache.org/streaming/)
+- [BlinkDB](http://blinkdb.org/)
+- [MLlib](http://spark.apache.org/mllib/)
+- [GraphX](http://spark.apache.org/graphx/)
 
-## ... and predicting Germany - Brasil
+<!--  ... and predicting Germany - Brasil
 
 \ 
 
@@ -350,10 +389,20 @@ val predict = model("Germany","Brasil")
 predict.score
 // ... Buffer overflow ...
 ```
+-->
+
+
+# Not covered
 
 - - -
 
-# Not covered
+## Better?
+
+## Faster?
+
+## Easier?
+
+## ...
 
 - - -
 
@@ -396,7 +445,7 @@ predict.score
 
 - - -
 
-# Some more examples
+# Example(s)
 
 - - -
 
@@ -406,7 +455,66 @@ predict.score
 
 - - -
 
-![](pics/BinnedAggregation.png)
+![<http://www.broadinstitute.org/education/glossary/genome>](pics/genome-glossary.jpg)
+
+- - -
+
+3 billion base pairs (3.2 x 10^9)
+
+Packaged in chromosomes
+
+~ 3GB for one human
+
+\ 
+
+Analysis requires a lot of processing power and storage
+
+\ 
+
+**Transcription Factors**: bind to DNA at certain location
+**Coverage**: basepair occurence in sequencing
+
+- - -
+
+Coverage data:
+
+\ 
+
+```
+Chromosome   Position    Sequencing coverage
+19           11004       1
+19           11005       2
+19           11006       2
+19           11007       2
+19           11008       3
+19           11009       3
+```
+
+- - -
+
+Transcription Factor data:
+
+\ 
+
+```bash
+> awk 'BEGIN {srand()} !/^$/ { if (rand() <= .00001) print $0}' bedfile.bed
+
+chr1    70529738    70529754    Maf     .   -
+chr1    161676477   161676495   Pou2f2  .   -
+chr1    176484690   176484699   AP-1    .   -
+chr10   6020071     6020084     CTCF    .   -
+chr11   1410823     1410838     NF-Y    .   -
+chr16   4366053     4366067     YY1     .   +
+chr17   77824593    77824602    BAF155  .   +
+chr19   10947006    10947013    Rad21   .   -
+chr19   49342112    49342121    SIX5    .   +
+chr22   39548908    39548922    Irf     .   +
+chr7    100048475   100048485   Egr-1   .   -
+chr8    119123364   119123374   YY1     .   +
+chr8    128562635   128562649   p300    .   -
+chr9    14315969    14315982    Egr-1   .   -
+chrX    101409366   101409384   CTCF    .   +
+```
 
 
 - - -
@@ -466,7 +574,7 @@ kvcov.count
 val cjoined = kvcov.join(kvtfs)
 
 // Waaaw, that's fast! In fact, nothing happened yet.
-// select 5 entries to see the result
+// select 5 entries to see the result but reformat first
 val flatjoined = cjoined map { case(x,(y,(z,zz))) => (x,z,zz,y) }
 flatjoined take 5
 ```
@@ -479,9 +587,57 @@ flatjoined take 5
 
 - - -
 
+### Visual Analytics
+
+![](pics/BD.png)
+
+- - -
+
 ![](pics/BinnedAggregation.png)
 
+- - -
 
+![](pics/locustree.png)
+
+- - -
+
+![](pics/layers.png)
+
+- - -
+
+![](pics/interface2.png)
+
+- - -
+
+![Lazy functional tree zipper](pics/lazytree.png)
+
+- - -
+
+Part of `treeDraw` :
+
+```javascript
+  d3.select(window).on("keydown", function() {
+    d3.event.preventDefault();
+    switch (d3.event.keyCode) {
+      case 38: 
+        zoomOut(tz,treeDraw);
+        break ;
+      case 40:
+        zoomIn(0,tz,treeDraw);
+        break;
+      case 37: 
+        panLeft(tz,treeDraw);
+        break;
+      case 39: 
+        panRight(tz,treeDraw);
+        break; 
+    };
+  });
+```
+
+- - -
+
+![](pics/Results.png)
 
 - - -
 
@@ -491,8 +647,8 @@ flatjoined take 5
 
 Some links:
 
-- [Slide sources](https://github.com/tverbeiren/BigDataBe-Spark)
-- [Spark](https://spark.apache.org/)
+- Slides: <https://github.com/tverbeiren/BigDataBe-Spark>
+- [Spark Home](https://spark.apache.org/)
 - [Data Visualization Lab](http://datavislab.org)
 - [ExaScience Life Lab](http://www.exascience.com/)
 - [Data Intuitive](http://data-intuitive.com)
@@ -563,6 +719,15 @@ cp local.conf local.backup
 cp local.tmp local.conf
 ./server_start.sh
 cd ~
+```
+
+- - -
+
+```bash
+export HOST=ly-1-00
+curl --data-binary @job-server-tests/target/job-server-tests-0.3.0.jar  $HOST:8090/jars/Cov
+curl -d '' "http://$HOST:8090/contexts/my_context?memory-per-node=16g&num-cpu-cores=32"
+curl -d 'partitions = 8, filename = "hdfs://'$HOST':54310/user/toniv/NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage"' "http://$HOST:8090/jobs?appName=Cov&classPath=spark.jobserver.Cov&context=my_context"
 ```
 
 - - -

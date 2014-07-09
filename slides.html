@@ -23,6 +23,7 @@
   <!--[if lt IE 9]>
   <script src="reveal.js/lib/js/html5shiv.js"></script>
   <![endif]-->
+    <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
 </head>
 <body>
 
@@ -46,15 +47,25 @@
 <h1>Contents</h1>
 <p>Introduction</p>
 <p>Spark</p>
-<p>Examples</p>
+<p>Not covered</p>
 <p>Ecosystem</p>
-<p>Conclusions</p>
+<p>Example(s)</p>
 </section>
 <section id="me-myself-and-i" class="slide level1">
 <h1>Me, Myself and I</h1>
 </section>
+<section class="slide level1">
+
+<figure>
+<img src="pics/I.png" />
+</figure>
+</section>
 <section id="introduction" class="slide level1">
 <h1>Introduction</h1>
+</section>
+<section class="slide level1">
+
+<h2 id="distribution-is-hard-...">Distribution is hard ...</h2>
 </section>
 <section class="slide level1">
 
@@ -64,11 +75,17 @@
 <p> </p>
 <h3 id="reducer">Reducer</h3>
 <p> </p>
-<p>(Nothing special)</p>
+<p>(Nothing special!)</p>
 </section>
 <section class="slide level1">
 
-<h2 id="an-experiment">An experiment ?</h2>
+<h2 id="word-count-in-mr">Word Count in M/R</h2>
+</section>
+<section class="slide level1">
+
+<figure>
+<img src="pics/MapReduceWordCountOverview.png" />
+</figure>
 </section>
 <section class="slide level1">
 
@@ -91,32 +108,46 @@
 <h2 id="what-would-be-needed">What would be needed?</h2>
 <p> </p>
 <ol type="1">
-<li>Language support</li>
-</ol>
-<!-- Functions as first-class citizens -->
-
-<p> </p>
-<ol start="2" type="1">
 <li>Platform</li>
 </ol>
 <!-- Fast and efficient resource management -->
 
 <p> </p>
-<ol start="3" type="1">
+<ol start="2" type="1">
 <li>Parallel abstraction mechanism</li>
 </ol>
 <!-- Some kind of abstraction that allows us to deal with what instead of how -->
 
+<p> </p>
+<ol start="3" type="1">
+<li>Language support</li>
+</ol>
+<!-- Functions as first-class citizens -->
+
+<p> </p>
 </section>
 <section id="spark" class="slide level1">
 <h1>Spark</h1>
 </section>
 <section class="slide level1">
 
-<h2 id="languages">3 languages</h2>
-<p><br /> Scala</p>
-<p>Java</p>
-<p>Python</p>
+<ul>
+<li>Berkeley University</li>
+<li>Apache Project</li>
+<li>v1.0 released on May 30d 2014</li>
+<li>Written in Scala</li>
+<li>Supported by <a href="http://databricks.com/">DataBricks</a></li>
+<li>Used by ...</li>
+</ul>
+<p> </p>
+<figure>
+<img src="pics/spark-logo.png" />
+</figure>
+</section>
+<section class="slide level1">
+
+<h2 id="language-support">Language support</h2>
+<p><br /> <img src="pics/languages.png" /></p>
 </section>
 <section class="slide level1">
 
@@ -168,6 +199,17 @@
 </section>
 <section class="slide level1">
 
+<svg width="400" height="400">
+  
+<rect width="400" height="400" style="fill:rgb(0,0,0);stroke-width:0;stroke:rgb(0,0,0)" /> <circle cx="200" cy="200" r="200" stroke="black" stroke-width="0" fill="yellow" /> <line x1="200" y1="200" x2="360" y2="80" style="stroke:rgb(0,0,0);stroke-width:4" /> <text x="280" y="80" fill="black">r = 1/2</text>
+</svg>
+
+<p> </p>
+<p><span class="math">\[\text{P}(\text{hitting circle}) \approx
+\text{Surface circle} = \frac{\pi}{4}\]</span></p>
+</section>
+<section class="slide level1">
+
 <pre class="scala"><code>import sc._
 
 val N = 10000000
@@ -192,7 +234,7 @@ def inCircle(point:(Double,Double)):Int = {
 </section>
 <section class="slide level1">
 
-<pre><code>// List of hits yes/no
+<pre class="scala"><code>// List of hits yes/no
 val inCircleList = par map(i =&gt; inCircle(randomPoint))
 
 // Return the first 5 elements from the RDD
@@ -205,7 +247,7 @@ inCircleList.toDebugString
 val total = inCircleList reduce (_+_)
 
 // Probability of hitting the circle *4 = Pi
-val P = 4. * total / N</code></pre>
+val S = 4. * total / N</code></pre>
 </section>
 <section class="slide level1">
 
@@ -269,7 +311,8 @@ val result = grouped map {case (k,vs) =&gt; (k, vs reduce (_+_))}</code></pre>
 <pre class="scala"><code>val file = textFile(&quot;Joyce-Ulysses.txt&quot;)
 val words = file.flatMap(_.split(&quot; &quot;))
 val mapped = words map (word =&gt; (word,1))
-val result = mapped reduceByKey(_+_)</code></pre>
+val result = mapped reduceByKey(_+_)
+result collect</code></pre>
 </section>
 <section class="slide level1">
 
@@ -310,27 +353,39 @@ result.collect</code></pre>
 <section class="slide level1">
 
 <h2 id="and-the-ecosystem">... and the Ecosystem</h2>
-<ul>
-<li>Spark SQL</li>
-<li>Spark Streaming</li>
-<li>Shark</li>
-<li>MLlib</li>
-<li>GraphX</li>
-</ul>
-</section>
-<section class="slide level1">
-
-<h2 id="and-predicting-germany---brasil">... and predicting Germany - Brasil</h2>
 <p> </p>
-<pre class="scala"><code>val data = textFile(&quot;WorlCupData.dat&quot;)
-val parsedData = data.map(x =&gt; parse(x)).cache()
+<ul>
+<li><a href="http://spark.apache.org/sql/">Spark SQL</a></li>
+<li><a href="http://spark.apache.org/streaming/">Spark Streaming</a></li>
+<li><a href="http://blinkdb.org/">BlinkDB</a></li>
+<li><a href="http://spark.apache.org/mllib/">MLlib</a></li>
+<li><a href="http://spark.apache.org/graphx/">GraphX</a></li>
+</ul>
+<!--  ... and predicting Germany - Brasil
+
+\ 
+
+```scala
+val data = textFile("WorlCupData.dat")
+val parsedData = data.map(x => parse(x)).cache()
 val model = trainModel(parsedData)
-val predict = model(&quot;Germany&quot;,&quot;Brasil&quot;)
+val predict = model("Germany","Brasil")
 predict.score
-// ... Buffer overflow ...</code></pre>
+// ... Buffer overflow ...
+```
+-->
+
+
 </section>
 <section id="not-covered" class="slide level1">
 <h1>Not covered</h1>
+</section>
+<section class="slide level1">
+
+<h2 id="better">Better?</h2>
+<h2 id="faster">Faster?</h2>
+<h2 id="easier">Easier?</h2>
+<h2 id="section">...</h2>
 </section>
 <section class="slide level1">
 
@@ -363,8 +418,8 @@ predict.score
 <img src="pics/Deployment.png" />
 </figure>
 </section>
-<section id="some-more-examples" class="slide level1">
-<h1>Some more examples</h1>
+<section id="examples" class="slide level1">
+<h1>Example(s)</h1>
 </section>
 <section class="slide level1">
 
@@ -375,8 +430,52 @@ predict.score
 <section class="slide level1">
 
 <figure>
-<img src="pics/BinnedAggregation.png" />
+<img src="pics/genome-glossary.jpg" alt="http://www.broadinstitute.org/education/glossary/genome" /><figcaption><a href="http://www.broadinstitute.org/education/glossary/genome">http://www.broadinstitute.org/education/glossary/genome</a></figcaption>
 </figure>
+</section>
+<section class="slide level1">
+
+<p>3 billion base pairs (3.2 x 10^9)</p>
+<p>Packaged in chromosomes</p>
+<p>~ 3GB for one human</p>
+<p> </p>
+<p>Analysis requires a lot of processing power and storage</p>
+<p> </p>
+<p><strong>Transcription Factors</strong>: bind to DNA at certain location <strong>Coverage</strong>: basepair occurence in sequencing</p>
+</section>
+<section class="slide level1">
+
+<p>Coverage data:</p>
+<p> </p>
+<pre><code>Chromosome   Position    Sequencing coverage
+19           11004       1
+19           11005       2
+19           11006       2
+19           11007       2
+19           11008       3
+19           11009       3</code></pre>
+</section>
+<section class="slide level1">
+
+<p>Transcription Factor data:</p>
+<p> </p>
+<pre class="bash"><code>&gt; awk &#39;BEGIN {srand()} !/^$/ { if (rand() &lt;= .00001) print $0}&#39; bedfile.bed
+
+chr1    70529738    70529754    Maf     .   -
+chr1    161676477   161676495   Pou2f2  .   -
+chr1    176484690   176484699   AP-1    .   -
+chr10   6020071     6020084     CTCF    .   -
+chr11   1410823     1410838     NF-Y    .   -
+chr16   4366053     4366067     YY1     .   +
+chr17   77824593    77824602    BAF155  .   +
+chr19   10947006    10947013    Rad21   .   -
+chr19   49342112    49342121    SIX5    .   +
+chr22   39548908    39548922    Irf     .   +
+chr7    100048475   100048485   Egr-1   .   -
+chr8    119123364   119123374   YY1     .   +
+chr8    128562635   128562649   p300    .   -
+chr9    14315969    14315982    Egr-1   .   -
+chrX    101409366   101409384   CTCF    .   +</code></pre>
 </section>
 <section class="slide level1">
 
@@ -430,7 +529,7 @@ kvcov.count
 val cjoined = kvcov.join(kvtfs)
 
 // Waaaw, that&#39;s fast! In fact, nothing happened yet.
-// select 5 entries to see the result
+// select 5 entries to see the result but reformat first
 val flatjoined = cjoined map { case(x,(y,(z,zz))) =&gt; (x,z,zz,y) }
 flatjoined take 5</code></pre>
 </section>
@@ -442,8 +541,66 @@ flatjoined take 5</code></pre>
 </section>
 <section class="slide level1">
 
+<h3 id="visual-analytics">Visual Analytics</h3>
+<figure>
+<img src="pics/BD.png" />
+</figure>
+</section>
+<section class="slide level1">
+
 <figure>
 <img src="pics/BinnedAggregation.png" />
+</figure>
+</section>
+<section class="slide level1">
+
+<figure>
+<img src="pics/locustree.png" />
+</figure>
+</section>
+<section class="slide level1">
+
+<figure>
+<img src="pics/layers.png" />
+</figure>
+</section>
+<section class="slide level1">
+
+<figure>
+<img src="pics/interface2.png" />
+</figure>
+</section>
+<section class="slide level1">
+
+<figure>
+<img src="pics/lazytree.png" alt="Lazy functional tree zipper" /><figcaption>Lazy functional tree zipper</figcaption>
+</figure>
+</section>
+<section class="slide level1">
+
+<p>Part of <code>treeDraw</code> :</p>
+<pre class="javascript"><code>  d3.select(window).on(&quot;keydown&quot;, function() {
+    d3.event.preventDefault();
+    switch (d3.event.keyCode) {
+      case 38: 
+        zoomOut(tz,treeDraw);
+        break ;
+      case 40:
+        zoomIn(0,tz,treeDraw);
+        break;
+      case 37: 
+        panLeft(tz,treeDraw);
+        break;
+      case 39: 
+        panRight(tz,treeDraw);
+        break; 
+    };
+  });</code></pre>
+</section>
+<section class="slide level1">
+
+<figure>
+<img src="pics/Results.png" />
 </figure>
 </section>
 <section id="the-end" class="slide level1">
@@ -451,8 +608,8 @@ flatjoined take 5</code></pre>
 <p> </p>
 <p>Some links:</p>
 <ul>
-<li><a href="https://github.com/tverbeiren/BigDataBe-Spark">Slide sources</a></li>
-<li><a href="https://spark.apache.org/">Spark</a></li>
+<li>Slides: <a href="https://github.com/tverbeiren/BigDataBe-Spark">https://github.com/tverbeiren/BigDataBe-Spark</a></li>
+<li><a href="https://spark.apache.org/">Spark Home</a></li>
 <li><a href="http://datavislab.org">Data Visualization Lab</a></li>
 <li><a href="http://www.exascience.com/">ExaScience Life Lab</a></li>
 <li><a href="http://data-intuitive.com">Data Intuitive</a></li>
@@ -521,6 +678,13 @@ cp local.conf local.backup
 cp local.tmp local.conf
 ./server_start.sh
 cd ~</code></pre>
+</section>
+<section class="slide level1">
+
+<pre class="bash"><code>export HOST=ly-1-00
+curl --data-binary @job-server-tests/target/job-server-tests-0.3.0.jar  $HOST:8090/jars/Cov
+curl -d &#39;&#39; &quot;http://$HOST:8090/contexts/my_context?memory-per-node=16g&amp;num-cpu-cores=32&quot;
+curl -d &#39;partitions = 8, filename = &quot;hdfs://&#39;$HOST&#39;:54310/user/toniv/NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage&quot;&#39; &quot;http://$HOST:8090/jobs?appName=Cov&amp;classPath=spark.jobserver.Cov&amp;context=my_context&quot;</code></pre>
 </section>
 <section class="slide level1">
 
