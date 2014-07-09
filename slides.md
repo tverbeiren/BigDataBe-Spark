@@ -31,6 +31,15 @@ Example(s)
 
 ## Distribution is hard ...
 
+\ 
+
+2 world views:
+
+\ 
+
+- **H**igh **P**erformance **C**omputing
+- **H**igh **T**hroughput **C**omputing
+
 - - - 
 
 ## Map / Reduce
@@ -54,6 +63,71 @@ Example(s)
 - - -
 
 ![](pics/MapReduceWordCountOverview.png)
+
+- - -
+
+```java
+import java.io.IOException;
+import java.util.*;
+        
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.conf.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+
+public class WordCount {
+        
+    public static void main(String[] args) throws Exception {
+        Configuration conf = new Configuration();
+            
+        Job job = new Job(conf, "wordcount");
+        
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(IntWritable.class);
+            
+        job.setMapperClass(Map.class);
+        job.setReducerClass(Reduce.class);
+            
+        job.setInputFormatClass(TextInputFormat.class);
+        job.setOutputFormatClass(TextOutputFormat.class);
+            
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+            
+        job.waitForCompletion(true);
+     }  
+
+     public static class Map extends Mapper<LongWritable, Text, Text, IntWritable> {
+        private final static IntWritable one = new IntWritable(1);
+        private Text word = new Text();
+            
+        public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+            String line = value.toString();
+            StringTokenizer tokenizer = new StringTokenizer(line);
+            while (tokenizer.hasMoreTokens()) {
+                word.set(tokenizer.nextToken());
+                context.write(word, one);
+            }
+        }
+     } 
+
+     public static class Reduce extends Reducer<Text, IntWritable, Text, IntWritable> {
+
+        public void reduce(Text key, Iterable<IntWritable> values, Context context) 
+          throws IOException, InterruptedException {
+            int sum = 0;
+            for (IntWritable val : values) {
+                sum += val.get();
+            }
+            context.write(key, new IntWritable(sum));
+        }
+     }
+}
+```
 
 - - -
 
@@ -208,13 +282,7 @@ val N = 10000000
 
 // Generate a sequence of numbers and distribute
 val par = parallelize(1 to N)
-// par: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[1] 
-//   at parallelize at <console>:12
-```
 
-- - -
-
-```scala
 // Generate a point in 2D unit square
 def randomPoint:(Double,Double) = {
     val x = Math.random()
@@ -276,7 +344,7 @@ val file = textFile("Joyce-Ulysses.txt")
 val words = file.flatMap(_.split(" "))
 
 // Map to (key,value) pairs
-val mapped = words map (word => (word,1)) 
+val mapped = words map (word => (word,1))
 
 // Sort and group by key, 
 // Result is of form (key, List(value1, value2, value3, ...))
@@ -357,6 +425,9 @@ val result = cached reduceByKey(_+_)
 result.collect
 // Laziness... oh my
 result.collect
+
+// Count how many times the word 'the' occurs in the text
+cached filter {case(word,v) => word=="the"} reduceByKey(_+_) collect
 ```
 
 <!-- So yes, caching works... but also: highly interactive! -->
@@ -637,6 +708,69 @@ Part of `treeDraw` :
 
 - - -
 
+```scala
+object CovQuery extends SparkJob with NamedRddSupport {
+
+  type Range = (Int, Int)
+  type TreePath = List[Int]
+
+  val B = 100     // number of bins, also N
+  val Z = 10      // zoom level with every step
+
+  override def validate(sc: SparkContext, config: Config): SparkJobValidation = SparkJobValid
+
+  override def runJob(sc: SparkContext, config: Config): Any = {
+
+    // a map with the persistent RDDs
+    val listOfPersistentRDDs = sc.getPersistentRDDs
+
+    val chrCache = namedRdds.get[DataPoint](myRDD).get
+
+    // Info about the interval
+    val superMin = low
+    val superMax = high
+
+    val subRange: Range = calcRange(path,superMin,superMax)
+    val mn = subRange._1
+    val mx = subRange._2
+
+    // The bin width, based on the number of bins (N)
+    val delta = (mx - mn) / B
+
+    // Only filter the region within the interval
+    val chrCache1 = chrCache filter (x => (mn <= x.position) && (x.position <= mx))
+
+    // Create the bins as the first argument of a new triple
+    val x1 = chrCache1 map (x => (myDiv(x.position - mn, delta), x.position, x.coverage))
+
+    // sum, max and min can be done on only the bin number and the coverage:
+    val fork1 = x1.map(x => (x._1,x._3))
+
+    // The 4 statistics
+    val sumSet = fork1.reduceByKey(_ + _)
+    val maxSet = fork1.reduceByKey(Math.max(_,_))
+    val minSet = fork1.reduceByKey(Math.min(_,_))
+    val countSet = x1.map(x => (x._1,1)).reduceByKey(_+_)
+
+    // Join the data and flatten the (nested) result
+    val joined = sumSet.join(maxSet).join(minSet).join(countSet)
+    val collected = joined.collect().map(x => (x._1, flattenT3(x._2)))
+
+    // The boundaries in the original coordinate can not be derived
+    // from the data, because it can not cope with empty regions.
+    val lowerboundRange = mn until mx by delta
+    val lowerboundIndex = 0 until B
+    val lowerbound = lowerboundIndex zip lowerboundRange
+
+    val dataMap =collected.map(x=> (x._1,List(x._2._1,x._2._2,x._2._3,x._2._4,x._2._1/x._2._4))).toMap.withDefaultValue(List(0,0,0,0,0))
+
+    return lowerbound.map(x => (x._1,List(x._2) ++ dataMap(x._1)))
+
+  }
+```
+
+- - -
+
 ![](pics/Results.png)
 
 - - -
@@ -647,12 +781,15 @@ Part of `treeDraw` :
 
 Some links:
 
+- @tverbeiren
 - Slides: <https://github.com/tverbeiren/BigDataBe-Spark>
 - [Spark Home](https://spark.apache.org/)
 - [Data Visualization Lab](http://datavislab.org)
 - [ExaScience Life Lab](http://www.exascience.com/)
 - [Data Intuitive](http://data-intuitive.com)
 
+
+- - -
 
 - - -
 
