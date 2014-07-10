@@ -47,8 +47,8 @@
 <h1>Contents</h1>
 <p>Introduction</p>
 <p>Spark</p>
-<p>Not covered</p>
 <p>Ecosystem</p>
+<p>Not covered</p>
 <p>Example(s)</p>
 </section>
 <section id="me-myself-and-i" class="slide level1">
@@ -274,7 +274,7 @@ public class WordCount {
 <p> </p>
 <svg width="400" height="400">
   
-<rect width="400" height="400" style="fill:rgb(0,0,0);stroke-width:0;stroke:rgb(0,0,0)" /> <circle cx="200" cy="200" r="200" stroke="black" stroke-width="0" fill="yellow" /> <line x1="200" y1="200" x2="360" y2="80" style="stroke:rgb(0,0,0);stroke-width:4" /> <text x="280" y="80" fill="black">r = 1/2</text>
+<rect width="400" height="400" style="fill:rgb(0,0,0);stroke-width:0;stroke:rgb(0,0,0)" /> <circle cx="200" cy="200" r="200" stroke="black" stroke-width="0" fill="yellow" /> <line x1="200" y1="200" x2="360" y2="80" style="stroke:rgb(0,0,0);stroke-width:4" /> <text x="240" y="80" fill="black">r = 1/2</text>
 </svg>
 
 <p> </p>
@@ -427,27 +427,13 @@ cached filter {case(word,v) =&gt; word==&quot;the&quot;} reduceByKey(_+_) collec
 <h2 id="and-the-ecosystem">... and the Ecosystem</h2>
 <p> </p>
 <ul>
-<li><a href="http://spark.apache.org/sql/">Spark SQL</a></li>
-<li><a href="http://spark.apache.org/streaming/">Spark Streaming</a></li>
-<li><a href="http://blinkdb.org/">BlinkDB</a></li>
-<li><a href="http://spark.apache.org/mllib/">MLlib</a></li>
-<li><a href="http://spark.apache.org/graphx/">GraphX</a></li>
+<li>Spark SQL: <a href="http://spark.apache.org/sql/">http://spark.apache.org/sql/</a></li>
+<li>Spark Streaming: <a href="http://spark.apache.org/streaming/">http://spark.apache.org/streaming/</a></li>
+<li>BlinkDB: <a href="http://blinkdb.org/">http://blinkdb.org/</a></li>
+<li>MLlib: <a href="http://spark.apache.org/mllib/">http://spark.apache.org/mllib/</a></li>
+<li>GraphX: <a href="http://spark.apache.org/graphx/">http://spark.apache.org/graphx/</a></li>
+<li>SparkR: <a href="http://amplab-extras.github.io/SparkR-pkg/">http://amplab-extras.github.io/SparkR-pkg/</a></li>
 </ul>
-<!--  ... and predicting Germany - Brasil
-
-\ 
-
-```scala
-val data = textFile("WorlCupData.dat")
-val parsedData = data.map(x => parse(x)).cache()
-val model = trainModel(parsedData)
-val predict = model("Germany","Brasil")
-predict.score
-// ... Buffer overflow ...
-```
--->
-
-
 </section>
 <section id="not-covered" class="slide level1">
 <h1>Not covered</h1>
@@ -509,7 +495,7 @@ predict.score
 
 <!-- Human DNA consists of around 3 billion base-pairs. this amounts to approximately 3GB of hard drive storage. This is not too much. The complexity of DNA analysis is due to something else: 
 
-1. The machines that read the DNA usually do not do that in an orderly fashion.
+1. The machines that read the DNA usually do not do that in an orderly fashion
 2. They make a lot of errors when reading base-pairs
 3. In order to cope with the errors, multiple copies of the DNA are read
 
@@ -765,137 +751,11 @@ flatjoined.toDebugString</code></pre>
 <ul>
 <li><span class="citation" data-cites="tverbeiren">@tverbeiren</span></li>
 <li>Slides: <a href="https://github.com/tverbeiren/BigDataBe-Spark">https://github.com/tverbeiren/BigDataBe-Spark</a></li>
-<li><a href="https://spark.apache.org/">Spark Home</a></li>
-<li><a href="http://datavislab.org">Data Visualization Lab</a></li>
-<li><a href="http://www.exascience.com/">ExaScience Life Lab</a></li>
-<li><a href="http://data-intuitive.com">Data Intuitive</a></li>
+<li>Spark Home: <a href="https://spark.apache.org/">https://spark.apache.org/</a></li>
+<li>Data Visualization Lab: <a href="http://datavislab.org">http://datavislab.org</a></li>
+<li>ExaScience Life Lab: <a href="http://www.exascience.com/">http://www.exascience.com/</a></li>
+<li>Data Intuitive: <a href="http://data-intuitive.com">http://data-intuitive.com</a></li>
 </ul>
-</section>
-<section class="slide level1">
-
-</section>
-<section class="slide level1">
-
-</section>
-<section id="reference-material-and-style-info..." class="slide level1">
-<h1>Reference material and style info...</h1>
-</section>
-<section class="slide level1">
-
-<style>
-#barchart svg {
-    overflow: hidden;
-}
-
-.node rect {
-    stroke: #333;
-    stroke-width: 1.5px;
-    fill: #fff;
-}
-
-text {
-  font-weight: 300;
-  font-size: 20px;
-}
-
-.edgeLabel rect {
-    fill: none;
-    min-width: 60px;
-}
-
-.edgePath {
-    stroke: #333;
-    stroke-width: 1.5px;
-    fill: none;
-}
-</style>
-
-
-</section>
-<section class="slide level1">
-
-<pre class="bash"><code>tmux
-isub -n 2
-module load hadoop-2.3.0
-module load spark-0.9.0-hadoop-2.3.0
-
-hadoop fs -mkdir /user
-hadoop fs -mkdir /user/toniv 
-hadoop fs -copyFromLocal data/NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage /user/toniv/
-hadoop fs -copyFromLocal data/201101_encode_motifs_in_tf_peaks.bed /user/toniv/
-hadoop fs -copyFromLocal data/Joyce-Ulysses.txt /user/toniv/
-hadoop fs -copyFromLocal data/lpsa.data /user/toniv/
-hdfs dfs -setrep -w 3 /user/toniv
-# Start the Spark Shell
-SPARK_MEM=32g MASTER=spark://ly-1-10:7077 bin/spark-shell</code></pre>
-</section>
-<section class="slide level1">
-
-<pre class="bash"><code>cd server
-cat local.conf | sed &#39;/^\ *master/ c\  master = &quot;&#39;&quot;$MASTER&quot;\&quot;&gt; local.tmp
-cp local.conf local.backup
-cp local.tmp local.conf
-./server_start.sh
-cd ~</code></pre>
-</section>
-<section class="slide level1">
-
-<pre class="bash"><code>export HOST=ly-1-00
-curl --data-binary @job-server-tests/target/job-server-tests-0.3.0.jar  $HOST:8090/jars/Cov
-curl -d &#39;&#39; &quot;http://$HOST:8090/contexts/my_context?memory-per-node=16g&amp;num-cpu-cores=32&quot;
-curl -d &#39;partitions = 8, filename = &quot;hdfs://&#39;$HOST&#39;:54310/user/toniv/NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage&quot;&#39; &quot;http://$HOST:8090/jobs?appName=Cov&amp;classPath=spark.jobserver.Cov&amp;context=my_context&quot;</code></pre>
-</section>
-<section class="slide level1">
-
-<pre class="scala"><code>val file = textFile(&quot;/var/log/system.log&quot;)
-val words = file.flatMap(_.split(&quot; &quot;))
-val mapped = words map (x =&gt; (x,1))
-val grouped = mapped.groupBy(_._1)
-val res = grouped map (x =&gt; x._2.length)</code></pre>
-</section>
-<section class="slide level1">
-
-<h3 id="lineage">Lineage</h3>
-<div id="simpleLineage" align="center">
-<svg width="600" height="500">
-<g transform="translate(20,20)"/>
-</svg>
-</div>
-
-<script>
-Reveal.addEventListener( 'ready', function( event ) {
-    // event.currentSlide, event.indexh, event.indexv
-    // Create a new directed graph
-    var g = new dagreD3.Digraph();
-
-    g.addNode("a1", { label: "file" });
-    g.addNode("a2", { label: "words" });
-    g.addNode("a3", { label: "mapped" });
-    g.addNode("a4", { label: "grouped" });
-    g.addNode("a5", { label: "result" });
-
-    g.addEdge(null, "a1", "a2", { label: "flatMap" });
-    g.addEdge(null, "a2", "a3", { label: "map / sort" });
-    g.addEdge(null, "a3", "a4", { label: "groupByKey" });
-    g.addEdge(null, "a4", "a5", { label: "reducyByKey" });
-    
-    var renderer = new dagreD3.Renderer();
-    renderer.edgeInterpolate('linear');
-    var svgElement = d3.selectAll("#simpleLineage svg g");
-    var layout = dagreD3.layout()
-//                        .nodeSep(20)
-//                        .rankDir("LR");
-    renderer.layout(layout).run(g, svgElement);
-} );
-</script>
-
-
-
-
-
-
-
-
 </section>
     </div>
   </div>

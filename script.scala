@@ -1,7 +1,9 @@
+
+
 import sc._
 
 val N = 10000000
-
+	
 // Generate a sequence of numbers and distribute
 val par = parallelize(1 to N)
 

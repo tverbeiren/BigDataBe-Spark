@@ -9,9 +9,9 @@ Introduction
 
 Spark
 
-Not covered
-
 Ecosystem
+
+Not covered
 
 Example(s)
 
@@ -271,7 +271,7 @@ Accepting **transformations** and **actions**
   <rect width="400" height="400" style="fill:rgb(0,0,0);stroke-width:0;stroke:rgb(0,0,0)" />
   <circle cx="200" cy="200" r="200" stroke="black" stroke-width="0" fill="yellow" />
   <line x1="200" y1="200" x2="360" y2="80" style="stroke:rgb(0,0,0);stroke-width:4" />
-  <text x="280" y="80" fill="black">r = 1/2</text>
+  <text x="240" y="80" fill="black">r = 1/2</text>
 </svg>
 
 \ 
@@ -448,25 +448,12 @@ cached filter {case(word,v) => word=="the"} reduceByKey(_+_) collect
 
 \ 
 
-- [Spark SQL](http://spark.apache.org/sql/)
-- [Spark Streaming](http://spark.apache.org/streaming/)
-- [BlinkDB](http://blinkdb.org/)
-- [MLlib](http://spark.apache.org/mllib/)
-- [GraphX](http://spark.apache.org/graphx/)
-
-<!--  ... and predicting Germany - Brasil
-
-\ 
-
-```scala
-val data = textFile("WorlCupData.dat")
-val parsedData = data.map(x => parse(x)).cache()
-val model = trainModel(parsedData)
-val predict = model("Germany","Brasil")
-predict.score
-// ... Buffer overflow ...
-```
--->
+- Spark SQL: <http://spark.apache.org/sql/>
+- Spark Streaming: <http://spark.apache.org/streaming/>
+- BlinkDB: <http://blinkdb.org/>
+- MLlib: <http://spark.apache.org/mllib/>
+- GraphX: <http://spark.apache.org/graphx/>
+- SparkR: <http://amplab-extras.github.io/SparkR-pkg/>
 
 
 # Not covered
@@ -538,7 +525,7 @@ predict.score
 
 <!-- Human DNA consists of around 3 billion base-pairs. this amounts to approximately 3GB of hard drive storage. This is not too much. The complexity of DNA analysis is due to something else: 
 
-1. The machines that read the DNA usually do not do that in an orderly fashion.
+1. The machines that read the DNA usually do not do that in an orderly fashion
 2. They make a lot of errors when reading base-pairs
 3. In order to cope with the errors, multiple copies of the DNA are read
 
@@ -810,142 +797,8 @@ Some links:
 
 - @tverbeiren
 - Slides: <https://github.com/tverbeiren/BigDataBe-Spark>
-- [Spark Home](https://spark.apache.org/)
-- [Data Visualization Lab](http://datavislab.org)
-- [ExaScience Life Lab](http://www.exascience.com/)
-- [Data Intuitive](http://data-intuitive.com)
-
-
-- - -
-
-- - -
-
-- - -
-
-# Reference material and style info...
-
-- - -
-
-<style>
-#barchart svg {
-    overflow: hidden;
-}
-
-.node rect {
-    stroke: #333;
-    stroke-width: 1.5px;
-    fill: #fff;
-}
-
-text {
-  font-weight: 300;
-  font-size: 20px;
-}
-
-.edgeLabel rect {
-    fill: none;
-    min-width: 60px;
-}
-
-.edgePath {
-    stroke: #333;
-    stroke-width: 1.5px;
-    fill: none;
-}
-</style>
-
-
-- - -
-
-```bash
-tmux
-isub -n 2
-module load hadoop-2.3.0
-module load spark-0.9.0-hadoop-2.3.0
-
-hadoop fs -mkdir /user
-hadoop fs -mkdir /user/toniv 
-hadoop fs -copyFromLocal data/NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage /user/toniv/
-hadoop fs -copyFromLocal data/201101_encode_motifs_in_tf_peaks.bed /user/toniv/
-hadoop fs -copyFromLocal data/Joyce-Ulysses.txt /user/toniv/
-hadoop fs -copyFromLocal data/lpsa.data /user/toniv/
-hdfs dfs -setrep -w 3 /user/toniv
-# Start the Spark Shell
-SPARK_MEM=32g MASTER=spark://ly-1-10:7077 bin/spark-shell
-```
-
-- - -
-
-```bash
-cd server
-cat local.conf | sed '/^\ *master/ c\  master = "'"$MASTER"\"> local.tmp
-cp local.conf local.backup
-cp local.tmp local.conf
-./server_start.sh
-cd ~
-```
-
-- - -
-
-```bash
-export HOST=ly-1-00
-curl --data-binary @job-server-tests/target/job-server-tests-0.3.0.jar  $HOST:8090/jars/Cov
-curl -d '' "http://$HOST:8090/contexts/my_context?memory-per-node=16g&num-cpu-cores=32"
-curl -d 'partitions = 8, filename = "hdfs://'$HOST':54310/user/toniv/NA12878.chrom19.SLX.maq.SRP000032.2009_07.coverage"' "http://$HOST:8090/jobs?appName=Cov&classPath=spark.jobserver.Cov&context=my_context"
-```
-
-- - -
-
-```scala
-val file = textFile("/var/log/system.log")
-val words = file.flatMap(_.split(" "))
-val mapped = words map (x => (x,1))
-val grouped = mapped.groupBy(_._1)
-val res = grouped map (x => x._2.length)
-```
-
-
-
-
-- - -
-
-### Lineage
-
-<div id="simpleLineage" align="center">
-<svg width="600" height="500">
-<g transform="translate(20,20)"/>
-</svg>
-</div>
-
-<script>
-Reveal.addEventListener( 'ready', function( event ) {
-    // event.currentSlide, event.indexh, event.indexv
-    // Create a new directed graph
-    var g = new dagreD3.Digraph();
-
-    g.addNode("a1", { label: "file" });
-    g.addNode("a2", { label: "words" });
-    g.addNode("a3", { label: "mapped" });
-    g.addNode("a4", { label: "grouped" });
-    g.addNode("a5", { label: "result" });
-
-    g.addEdge(null, "a1", "a2", { label: "flatMap" });
-    g.addEdge(null, "a2", "a3", { label: "map / sort" });
-    g.addEdge(null, "a3", "a4", { label: "groupByKey" });
-    g.addEdge(null, "a4", "a5", { label: "reducyByKey" });
-    
-    var renderer = new dagreD3.Renderer();
-    renderer.edgeInterpolate('linear');
-    var svgElement = d3.selectAll("#simpleLineage svg g");
-    var layout = dagreD3.layout()
-//                        .nodeSep(20)
-//                        .rankDir("LR");
-    renderer.layout(layout).run(g, svgElement);
-} );
-</script>
-
-
-
-
-
+- Spark Home: <https://spark.apache.org/>
+- Data Visualization Lab: <http://datavislab.org>
+- ExaScience Life Lab: <http://www.exascience.com/>
+- Data Intuitive: <http://data-intuitive.com>
 
