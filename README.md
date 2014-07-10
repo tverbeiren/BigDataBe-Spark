@@ -4,6 +4,6 @@ Slides and material for the presentation on Spark for the Meetup Group on 9/7/20
 
 Slides are created using `Markdown` and converted to `reveal.js` using `pandoc`. 
 
-Accessing the [presentation](tverbeiren.github.io/BigDataBe-Spark) can done from this url: <tverbeiren.github.io/BigDataBe-Spark>
+Accessing the [presentation](http://tverbeiren.github.io/BigDataBe-Spark) can done from this url: <http://tverbeiren.github.io/BigDataBe-Spark>
 
-A [PDF version](tverbeiren.github.io/BigDataBe-Spark/slides.pdf) or [long html](tverbeiren.github.io/BigDataBe-Spark/slides-doc.html) version are available as well.
+A [PDF version](http://tverbeiren.github.io/BigDataBe-Spark/slides.pdf) or [long html](http://tverbeiren.github.io/BigDataBe-Spark/slides-doc.html) version are available as well.
